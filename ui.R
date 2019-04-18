@@ -10,11 +10,17 @@ shinyUI(
                tabPanel(
                  'Generate Data', icon = icon("sliders")
                  , fluidRow(
-                   infoBoxOutput('df_columns')
+                   useShinydashboard()
+                   , infoBoxOutput('df_columns')
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
+                   , box(background = "black"
+                         , icon("columns fa-pull-left fa-5x")
+                         , "Number of Columns"
+                         , p("10",style="font-size:200%;"))
                  )
                  , uiOutput("dynamic_inputs")
+                 , dataTableOutput('preview_fake_df')
                  ),
                
                tabPanel('About/Help', icon = icon("question-circle"),tags$style("float: right;")

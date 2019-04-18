@@ -95,9 +95,10 @@ shinyServer(function(input, output, clientData, session) {
     output$df_columns <- renderInfoBox({
       
       infoBox(ncol(fake_df()),
-               title = "Number of Columns",
-               icon=icon("columns"),
-               color="blue")
+               title = "Number of Columns"
+               , icon=icon("columns")
+               , color="black"
+               , fill = TRUE)
     })
     
     output$df_rows <- renderInfoBox({
