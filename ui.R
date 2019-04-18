@@ -11,6 +11,7 @@ shinyUI(
                  'Generate Data', icon = icon("sliders")
                  , fluidRow(
                    useShinydashboard()
+                   , verbatimTextOutput("test")
                    , infoBoxOutput('df_columns')
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')

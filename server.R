@@ -129,16 +129,25 @@ shinyServer(function(input, output, clientData, session) {
     output$dynamic_inputs <- renderUI({
       lapply(names(fake_df()),function(x){
       tagList(
-        fluidRow(
-          column(3,textInput(paste0(x,grep(x,names(fake_df()))), 'Variable Name', x))
-          , column(3,selectInput(paste0("var_type",grep(x,names(fake_df()))), 'Variable Type', "numeric"))
-          , column(3,p("Options Placeholder e.g., Provide levels for nominal variable, range for dates or numbers, etc"))
+        fluidRow(column(4,"Column: Name"),column(4,"Type"),column(4,"Options"))
+        , fluidRow(
+          column(4,textInput(paste0(x,grep(x,names(fake_df()))), NULL, x))
+          , column(4,selectInput(paste0("var_type",grep(x,names(fake_df()))), NULL
+                                 # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+                                 , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
+          # , column(4,switch(input[["var_type2"]],
+          #                   "Sequential Primary Key" = p("test")
+          #                   , "Numeric" = sliderInput("dynamic", "Dynamic",
+          #                                          min = 1, max = 20, value = 10)
+          #                   , "Date Range" = dateRangeInput("dynamic", "Dynamic")
+          # ))
         )
-        , fluidRow(p("Delete Column (Button Placeholder)"))
+        , fluidRow(actionButton(paste0("delete_column",x), "Delete Column"))
       )
       })
     })
 
+    output$test <- renderText({input$var_type2 })
 
     output$explore_chart <- renderPlot({
 
