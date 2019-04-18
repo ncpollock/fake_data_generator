@@ -19,6 +19,8 @@ charcoal <- '#3d3d3d'
 
 library(shiny)
 library(shinydashboard)
+library(shinyWidgets)
+useShinydashboard()
 library(shinythemes)
 library(shinyBS)
 library(DT)
