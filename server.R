@@ -106,7 +106,8 @@ shinyServer(function(input, output, clientData, session) {
       infoBox(nrow(fake_df()),
                title = "Number of Rows",
                icon=icon("align-justify"),
-               color="blue")
+               color="yellow",
+              fill=TRUE)
     })
     
     output$df_size <- renderInfoBox({
@@ -121,11 +122,20 @@ shinyServer(function(input, output, clientData, session) {
                color="blue")
     })
     
-# explore.tab ########################################################
+# dynamic ui ########################################################
     
+    # this is where most of the meat will happen!
+    # clicking "Add Column" or "Delete Column" will update fake_df() which will in turn trigger this to run
     output$dynamic_inputs <- renderUI({
       lapply(names(fake_df()),function(x){
-        textInput(paste0(x,grep(x,names(fake_df()))), 'Variable Name', x)
+      tagList(
+        fluidRow(
+          column(3,textInput(paste0(x,grep(x,names(fake_df()))), 'Variable Name', x))
+          , column(3,selectInput(paste0("var_type",grep(x,names(fake_df()))), 'Variable Type', "numeric"))
+          , column(3,p("Options Placeholder e.g., Provide levels for nominal variable, range for dates or numbers, etc"))
+        )
+        , fluidRow(p("Delete Column (Button Placeholder)"))
+      )
       })
     })
 
