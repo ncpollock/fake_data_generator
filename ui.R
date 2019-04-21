@@ -20,7 +20,9 @@ shinyUI(
                          , "Number of Columns"
                          , p("10",style="font-size:200%;"))
                  )
-                 , uiOutput("dynamic_inputs")
+                 , column(4,"Column: Name"),column(4,"Type"),column(4,"Options")
+                 , column(8, uiOutput("dynamic_inputs"))
+                 # , column(4,uiOutput("ui"))
                  , dataTableOutput('preview_fake_df')
                  ),
                
