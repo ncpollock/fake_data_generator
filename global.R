@@ -31,6 +31,10 @@ library(dplyr)
 library(tidyr)
 library(maps)
 
+# specify the height of a container
+# could make an input to find the right height dynamically!
+static_height <- div(style = "height:50px !importanat;background-color: yellow;")
+
 # style column names / header for datatables
 dt_column_head <- JS(
   "function(settings, json) {",

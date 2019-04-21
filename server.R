@@ -137,47 +137,52 @@ shinyServer(function(input, output, clientData, session) {
       
       lapply(names(fake_df()),function(x){
       tagList(
-        fluidRow(
-          static_height
-          , column(4,textInput(paste0(x,grep(x,names(fake_df()))), NULL, x))
-          , column(4,selectInput(paste0("var_type",grep(x,names(fake_df()))), NULL
+        fluidRow(class = "variable-row"
+          , column(4
+                 , style = "margin-top: 25px;"
+                 , textInput(paste0(x,grep(x,names(fake_df()))), NULL, x))
+          , column(4
+                   , style = "margin-top: 25px;"
+                   , selectInput(paste0("var_type",grep(x,names(fake_df()))), NULL
                                  # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
                                  , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
           # , uiOutput("ui")
-          , column(4
-                   , if (!is.null(input[[paste0("var_type",grep(x,names(fake_df())))]])) {switch(
-                     # "Numeric"
-                     input[[paste0("var_type",grep(x,names(fake_df())))]] # may need this in a different chunk
-                     , "Sequential Primary Key" = p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
-                     , "Numeric" = sliderInput("dynamic", "Dynamic",
-                                               min = 1, max = 20, value = 10)
-                     , "Date Range" = dateRangeInput("dynamic", "Dynamic")
-                   )})
-        )
-        , fluidRow(actionButton(paste0("delete_column",x), "Delete Column")
-                   # , dynamic help buttons based on variable type selection! 
+          # , if (!is.null(input[[paste0("var_type",grep(x,names(fake_df())))]])){
+          #   column(4
+          #          , switch(
+          #            # "Numeric"
+          #            input[[paste0("var_type",grep(x,names(fake_df())))]] # may need this in a different chunk
+          #            , "Sequential Primary Key" = p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
+          #            , "Numeric" = sliderInput("dynamic", "Dynamic",
+          #                                      min = 1, max = 20, value = 10)
+          #            , "Date Range" = dateRangeInput("dynamic", "Dynamic")
+          #          ))
+          # }
+
+        , column(4
+                 , style = "margin-top: 25px;"
+                 , actionButton(paste0("delete_column",x), "Delete Column",icon=icon("trash"),style="background-color: red;")
+                   # , dynamic help buttons based on variable type selection!
                    )
       )
+      )
       })
-      # local_reactive_inspect_vars()
-      # do.call(tagList, variable_output)
+      # local_reactive_dynamic_inputs()
+      # do.call(tagList, variable_ui)
     })
     
-    output$ui <- renderUI({
+    output$dynamic_inputs_2 <- renderUI({
       lapply(names(fake_df()),function(x){
-        if (is.null(input[[paste0("var_type",grep(x,names(fake_df())))]]))
-          return()
-
-        column(12
-               , static_height
-               , switch(
-          # "Numeric"
+        # if (is.null(input[[paste0("var_type",grep(x,names(fake_df())))]]))
+        #   return()
+        fluidRow(class = "variable-row"
+          , switch(
           input[[paste0("var_type",grep(x,names(fake_df())))]] # may need this in a different chunk
-          , "Sequential Primary Key" = p("test")
-          , "Numeric" = sliderInput("dynamic", "Dynamic",
-                                    min = 1, max = 20, value = 10)
-          , "Date Range" = dateRangeInput("dynamic", "Dynamic")
+          , "Sequential Primary Key" = , column(12, style = "padding-top: 25px;",p("Sequential integers from 1 to the number of rows. Can serve as a unique ID."))
+          , "Numeric" = column(12,sliderInput("dynamic", "",min = 1, max = 20, value = 10))
+          , "Date Range" = column(12,dateRangeInput("dynamic", ""))
         ))
+        # )
       })
     })
 

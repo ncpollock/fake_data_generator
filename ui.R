@@ -1,13 +1,15 @@
 # START
 shinyUI(
   tagList(
-    # tags$link(rel = "stylesheet", type = "text/css", href = "my_style.css"),
-    navbarPage(id = "tabs",
-               theme = shinytheme("darkly"),
-               title = p(strong("Data Generator"),style=paste0("color: white;")),
-               windowTitle = "Data Generator",
-               # footer = div(id="site-footer"),
-               tabPanel(
+    tags$link(rel = "stylesheet", type = "text/css", href = "my_style.css"),
+    navbarPage(id = "tabs"
+               , theme = shinytheme("darkly")
+               , title = p(strong("Data Generator")
+                         # ,style=paste0("color: white;")
+                         )
+               , windowTitle = "Data Generator"
+               , footer = div(id="site-footer")
+               , tabPanel(
                  'Generate Data', icon = icon("sliders")
                  , fluidRow(
                    useShinydashboard()
@@ -21,8 +23,8 @@ shinyUI(
                          , p("10",style="font-size:200%;"))
                  )
                  , column(4,"Column: Name"),column(4,"Type"),column(4,"Options")
-                 , column(8, uiOutput("dynamic_inputs"))
-                 # , column(4,uiOutput("ui"))
+                 , column(8,uiOutput("dynamic_inputs"))
+                 , column(4,uiOutput("dynamic_inputs_2"))
                  , dataTableOutput('preview_fake_df')
                  ),
                

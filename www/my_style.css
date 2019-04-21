@@ -1,0 +1,27 @@
+
+/* force static row size for variable input types */
+.variable-row{
+  height: 110px;
+  border-top: 5px solid gray;
+  /*margin-top: 20px;*/
+  /* vertical-align: middle; */
+  }
+  
+/* simple footer to style with a <div>id="site-footer"</div> */
+/* could define ellaborate footer in footer.html */
+/* would like to keep footer low on page when content is minimal */
+#site-footer {
+  margin-top: 50px; /* space between content and footer */
+	background: #375a7f center no-repeat;
+	border-top: 3px solid black;
+	text-align: left;
+	vertical-align: middle;
+	-moz-background-size: cover;
+	-webkit-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;  
+  padding-top: 25px; 
+  padding-bottom: 5%; 
+  padding-left: 5%;
+  box-shadow: 0 50vh 0 50vh #375a7f;
+}
