@@ -13,10 +13,11 @@ shinyUI(
                  'Generate Data', icon = icon("sliders")
                  , fluidRow(
                    useShinydashboard()
-                   , verbatimTextOutput("test")
+                   # , verbatimTextOutput("test")
                    , infoBoxOutput('df_columns')
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
+                   , actionButton("add","Add New Variable")
                    , box(background = "black"
                          , icon("columns fa-pull-left fa-5x")
                          , "Number of Columns"
@@ -29,6 +30,10 @@ shinyUI(
                  ),
                
                tabPanel('About/Help', icon = icon("question-circle"),tags$style("float: right;")
+                        ,p("Some inspirations:"
+                           ,br(),"https://mockaroo.com/"
+                           ,br(),"https://ebsubudhi.shinyapps.io/DataGeneration/"
+                           ,br(),"https://www.onlinedatagenerator.com/")
                         ,p(strong("Developed by: "),
                            br(),
                            a(href="https://ncpollock.github.io/"

@@ -11,53 +11,24 @@ shinyServer(function(input, output, clientData, session) {
   fake_df <- reactive({
       
     n_students <- 1000 # the number of grads per cohort
-    
-    # five years of grads where:
-    # the suffix 10 = winter semester grads
-    # the suffix 40 = fall semester grads
     terms <- sort(rep(c(paste0(2014:2018,"10"),paste0(2013:2017,"40")),n_students))
     n_terms <- length(unique(terms)) #number of terms generated
     
     air_df <- data.frame( # make it a dataframe
       student_id = 1:(n_students*n_terms), # arbitrary unique identifier
       term_code = terms, # assign terms as term_code
-      
-      # randomly assign one of the three schools, do it for every grad for every term
-      # eg "BA" = Business Administration
       school = sample(c("BA","AS","EG"),size=n_students*n_terms,replace=TRUE),
-      
-      # randomly assign an admit code, do it for every grad for every term,
-      # but repeat the same order term after term
-      ATYP = rep(sample(c("F","T"),size=n_students,replace=TRUE),n_terms),
-      
-      # randomly assign a binary sex code, do it for every grad for every term,
-      # but repeat the same order term after term 
-      # and force the porportion to be %55 Male
       sex = rep(sample(c("M","F"),prob=c(.55,.45),size=n_students,replace=TRUE),n_terms),
-      
-      # randomly assign an residency code (eg in-state), do it for every grad for every term,
-      # but repeat the same order term after term
-      residency = rep(sample(c("I","O"),size=n_students,replace=TRUE),n_terms),
-      
-      # number of times a grad met with career services (from 0 to 10 times)
-      # force a random uniform distribution across the dataset.
       career_use = round(runif(n_students*n_terms,0,10)),
-      
-      # randomly assign a post-graduation outcome, do it for every grad for every term,
-      # and force the porportion to be %64 Employed, %27 Grad School, etc
       post_grad_outcome = sample(c("Employed","Grad School","Still Seeking","Other"),prob=c(.64,.27,.07,.02),size=n_students*n_terms,replace=TRUE),
-      
-      # these vars are placeholders
       gpa = 0,
       salary = 0,
-      
-      # let the strings be chracters, not factors
       stringsAsFactors = FALSE
     )
     
     # use a linear regression equation to force relationship
     # between career_use and gpa for Freshman admits
-    air_df$gpa <- ifelse(air_df$ATYP=="F",
+    air_df$gpa <- ifelse(air_df$sex=="F",
                          #intercept + slope*value + error/noise
                          #different slopes for a nice interaction effect
                          2.5 + .15*air_df$career_use + rnorm(n_students*n_terms,0,1),
@@ -114,12 +85,8 @@ shinyServer(function(input, output, clientData, session) {
     })
     
     output$df_size <- renderInfoBox({
-      
-      tdata <- ifelse(is.null(fake_df()),0,
-                      format(object.size(fake_df()),units="b"))
 
-      infoBox(value = p(tdata,br(),
-              format(object.size(fake_df()),units="Mb")),
+      infoBox(format(object.size(fake_df()),units="Mb"),
                title="Dataset Size",
                icon=icon("expand-arrows-alt"),
                color="blue", fill=TRUE)
@@ -146,19 +113,6 @@ shinyServer(function(input, output, clientData, session) {
                    , selectInput(paste0("var_type",grep(x,names(fake_df()))), NULL
                                  # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
                                  , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
-          # , uiOutput("ui")
-          # , if (!is.null(input[[paste0("var_type",grep(x,names(fake_df())))]])){
-          #   column(4
-          #          , switch(
-          #            # "Numeric"
-          #            input[[paste0("var_type",grep(x,names(fake_df())))]] # may need this in a different chunk
-          #            , "Sequential Primary Key" = p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
-          #            , "Numeric" = sliderInput("dynamic", "Dynamic",
-          #                                      min = 1, max = 20, value = 10)
-          #            , "Date Range" = dateRangeInput("dynamic", "Dynamic")
-          #          ))
-          # }
-
         , column(4
                  , style = "margin-top: 25px;"
                  , actionButton(paste0("delete_column",x), "Delete Column",icon=icon("trash"),style="background-color: red;")
@@ -167,8 +121,6 @@ shinyServer(function(input, output, clientData, session) {
       )
       )
       })
-      # local_reactive_dynamic_inputs()
-      # do.call(tagList, variable_ui)
     })
     
     output$dynamic_inputs_2 <- renderUI({
@@ -187,6 +139,51 @@ shinyServer(function(input, output, clientData, session) {
     })
 
     output$test <- renderText({input$var_type2 })
+    
+    # init a few columns
+    observe({
+
+      if(input$add == 0 | is.null(input$add)){
+
+        # insertUI(
+        #   selector = "#add",
+        #   where = "afterEnd",
+        #   ui = textInput("txt",
+        #               "Insert some text")
+        # )
+
+        lapply(names(fake_df()),function(x){
+      # insertUI(
+      #   selector = "#add",
+      #   where = "afterEnd",
+      #   ui = textInput(paste0("txt", x),
+      #                  paste0("Insert some text",x))
+      # )
+          insertUI(
+            selector = "#add",
+            where = "afterEnd",
+            ui = tagList(
+            fluidRow(class = "variable-row"
+                     , column(4
+                              , style = "margin-top: 25px;"
+                              , textInput(paste0(x,grep(x,names(fake_df())),2), NULL, x))
+                     , column(4
+                              , style = "margin-top: 25px;"
+                              , selectInput(paste0("var_type",grep(x,names(fake_df())),2), NULL
+                                            # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+                                            , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
+                     , column(4
+                              , style = "margin-top: 25px;"
+                              , actionButton(paste0("delete_column",x,2), "Delete Column",icon=icon("trash"),style="background-color: red;")
+                              # , dynamic help buttons based on variable type selection!
+                     )
+            )
+          ))
+        })
+      }
+
+    })
+    
     
 # SANDBOX ###########################################################
 #     
