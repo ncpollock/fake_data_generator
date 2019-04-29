@@ -10,59 +10,29 @@ shinyServer(function(input, output, clientData, session) {
     
   fake_df <- reactive({
       
-    n_students <- 1000 # the number of grads per cohort
-    terms <- sort(rep(c(paste0(2014:2018,"10"),paste0(2013:2017,"40")),n_students))
-    n_terms <- length(unique(terms)) #number of terms generated
-    
-    air_df <- data.frame( # make it a dataframe
-      student_id = 1:(n_students*n_terms), # arbitrary unique identifier
-      term_code = terms, # assign terms as term_code
-      school = sample(c("BA","AS","EG"),size=n_students*n_terms,replace=TRUE),
-      sex = rep(sample(c("M","F"),prob=c(.55,.45),size=n_students,replace=TRUE),n_terms),
-      career_use = round(runif(n_students*n_terms,0,10)),
-      post_grad_outcome = sample(c("Employed","Grad School","Still Seeking","Other"),prob=c(.64,.27,.07,.02),size=n_students*n_terms,replace=TRUE),
-      gpa = 0,
-      salary = 0,
-      stringsAsFactors = FALSE
+    n_participants <- 100 # the number of study participants
+
+    fake_df <- data.frame(
+      participant_id = 1:n_participants # arbitrary unique identifier
+      , condition = sample(c("Control","Low Dose","High Dose"),n_participants,replace=TRUE)
+      , weight = rnorm(n_participants,145,10)
+      , notes = "Lorem Ipsum"
+      , stringsAsFactors = FALSE
     )
     
-    # use a linear regression equation to force relationship
-    # between career_use and gpa for Freshman admits
-    air_df$gpa <- ifelse(air_df$sex=="F",
-                         #intercept + slope*value + error/noise
-                         #different slopes for a nice interaction effect
-                         2.5 + .15*air_df$career_use + rnorm(n_students*n_terms,0,1),
-                         3.7 + .01*air_df$career_use + rnorm(n_students*n_terms,0,1))
-    # adjust for impossible values (ie a GPA greater than 4.0 or less than zer0)
-    air_df$gpa = ifelse(air_df$gpa>4,runif(n_students*n_terms,3.2,4),air_df$gpa) # keep gpa under 4
-    air_df$gpa = ifelse(air_df$gpa<0,runif(n_students*n_terms,0,1),air_df$gpa) # keep gpa above 0
-    
-    air_df$career_use <- ifelse(air_df$post_grad_outcome=="Employed",
-                                #intercept + slope*value + error/noise
-                                #different slopes for a nice interaction effect
-                                sample(0:10
-                                       ,prob=c(3:13)
-                                       ,replace=TRUE
-                                       ,size=length(
-                                         air_df$career_use[air_df$post_grad_outcome=="Employed"])),
-                                air_df$career_use)
-    
-    air_df$salary <- ifelse(air_df$school=="EG",
-                            #intercept + slope*value + error/noise
-                            #different slopes for a nice interaction effect
-                            64000 + 750*air_df$career_use + rnorm(n_students*n_terms,0,1000),
-                            ifelse(air_df$school=="AS",
-                                   48000 + 10*air_df$career_use + rnorm(n_students*n_terms,0,4000),
-                                   51000 + 400*air_df$career_use + rnorm(n_students*n_terms,0,2700)))
-    air_df$salary <- ifelse(air_df$post_grad_outcome=="Employed",air_df$salary,NA)
+    # force difference means between control and experimental
+    fake_df$weight <- ifelse(fake_df$condition=="Control"
+                         , rnorm(n_participants,189,15)
+                         , rnorm(n_participants,145,8))
       
-    fake_df <- air_df
       fake_df
     })
     
     output$preview_fake_df <- renderDataTable({
       
-      datatable(head(fake_df(),50),filter='top',options=list(scrollX=TRUE))
+      datatable(head(fake_df(),50),filter='top',options=list(scrollX=TRUE)) %>%
+        formatStyle(names(fake_df())
+          , color="black")
 
     })
     
@@ -191,22 +161,6 @@ shinyServer(function(input, output, clientData, session) {
         })
 
     })
-    
-    # observeEvent(input$delete_columnsalary2,{
-    #   removeUI(
-    #     selector = "div_salary"
-    #   )
-    # })
-    
-    # observe({
-    # lapply(names(fake_df()),function(x){
-    # observeEvent(input[[paste0("delete_column",x,2)]], {
-    #   removeUI(
-    #     selector = paste0("#div_",x)
-    #   )
-    # })
-    # })
-    # })
     
 # SANDBOX ###########################################################
 #     
