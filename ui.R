@@ -17,7 +17,9 @@ shinyUI(
                    , infoBoxOutput('df_columns')
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
-                   , actionButton("add","Add New Variable")
+                   , column(12,style="text-align: center;",actionButton("add","Add New Variable",width = "80%"
+                                            ,style="background-color: green;"
+                                            ,icon = icon("plus-square")))
                    # test creating my own infobox
                    , box(background = "black"
                          , icon("columns fa-pull-left fa-5x")
