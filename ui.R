@@ -18,6 +18,7 @@ shinyUI(
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
                    , actionButton("add","Add New Variable")
+                   # test creating my own infobox
                    , box(background = "black"
                          , icon("columns fa-pull-left fa-5x")
                          , "Number of Columns"

@@ -94,12 +94,6 @@ shinyServer(function(input, output, clientData, session) {
     
 # dynamic ui ########################################################
     
-    # this is where most of the work will happen!
-    # clicking "Delete Column" will update fake_df()
-    # a datatable may be better suited to this...?
-    # render separate UIs outside of column() eg renderUI({lapply(selectInput())})
-      # then in actual ui file, put column(4,textui),column(4,selectui),column(4,optionui) ?
-      # I think this is why I need local({}) ...
     output$dynamic_inputs <- renderUI({
       
       lapply(names(fake_df()),function(x){
@@ -144,31 +138,53 @@ shinyServer(function(input, output, clientData, session) {
     observe({
 
         lapply(names(fake_df()),function(x){
+          
+          # eg names(mtcars); grep("wt",names(mtcars))
+          var_id <- grep(x,names(fake_df()))
+          
           insertUI(
             selector = "#add",
             where = "afterEnd",
             # ui = tagList(
-            ui = tags$div(id = paste0("div_",x)
+            ui = column(12,id = paste0("div_",x)
             , fluidRow(class = "variable-row"
                      , column(4
-                              , style = "margin-top: 25px;"
-                              , textInput(paste0(x,grep(x,names(fake_df())),2), NULL, x))
-                     , column(4
-                              , style = "margin-top: 25px;"
-                              , selectInput(paste0("var_type",grep(x,names(fake_df())),2), NULL
+                              , style = "margin-top: 25px; border-right: 1px dashed black;"
+                              , textInput(paste0("var_name_",var_id), NULL, x))
+                     , column(4,id = paste0("var_type_col_",var_id)
+                              , style = "margin-top: 25px; border-right: 1px dashed black;"
+                              , selectInput(paste0("var_type_",var_id), NULL
                                             # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
                                             , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
-                     , column(4
+                     , column(3,id = paste0("var_input_col_",var_id),sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10))
+                     , column(1
                               , style = "margin-top: 25px;"
-                              , actionButton(paste0("delete_column",x,2), "Delete Column",icon=icon("trash"),style="background-color: red;")
+                              , actionButton(paste0("var_delete_",var_id), "Delete",icon=icon("trash"),style="background-color: red;")
                               # , dynamic help buttons based on variable type selection!
                      )
             )
           ))
           
-          observeEvent(input[[paste0("delete_column",x,2)]], {
+          observeEvent(input[[paste0("var_delete_",var_id)]], {
             removeUI(
               selector = paste0("#div_",x)
+            )
+          })
+          
+          observeEvent(input[[paste0("var_type_",var_id)]], {
+            removeUI(
+              selector = paste0("#var_input_col_",var_id)
+            )
+            insertUI(
+              # selector = paste0("#var_type_",var_id),
+              selector = paste0("#var_type_col_",var_id)
+              , where = "afterEnd"
+              , ui = column(3,id = paste0("var_input_col_",var_id),switch(
+                input[[paste0("var_type_",var_id)]]
+                , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
+                , "Numeric" = sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10)
+                , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
+              ))
             )
           })
           
