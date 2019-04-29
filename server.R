@@ -143,27 +143,13 @@ shinyServer(function(input, output, clientData, session) {
     # init a few columns
     observe({
 
-      if(input$add == 0 | is.null(input$add)){
-
-        # insertUI(
-        #   selector = "#add",
-        #   where = "afterEnd",
-        #   ui = textInput("txt",
-        #               "Insert some text")
-        # )
-
         lapply(names(fake_df()),function(x){
-      # insertUI(
-      #   selector = "#add",
-      #   where = "afterEnd",
-      #   ui = textInput(paste0("txt", x),
-      #                  paste0("Insert some text",x))
-      # )
           insertUI(
             selector = "#add",
             where = "afterEnd",
-            ui = tagList(
-            fluidRow(class = "variable-row"
+            # ui = tagList(
+            ui = tags$div(id = paste0("div_",x)
+            , fluidRow(class = "variable-row"
                      , column(4
                               , style = "margin-top: 25px;"
                               , textInput(paste0(x,grep(x,names(fake_df())),2), NULL, x))
@@ -179,11 +165,32 @@ shinyServer(function(input, output, clientData, session) {
                      )
             )
           ))
+          
+          observeEvent(input[[paste0("delete_column",x,2)]], {
+            removeUI(
+              selector = paste0("#div_",x)
+            )
+          })
+          
         })
-      }
 
     })
     
+    # observeEvent(input$delete_columnsalary2,{
+    #   removeUI(
+    #     selector = "div_salary"
+    #   )
+    # })
+    
+    # observe({
+    # lapply(names(fake_df()),function(x){
+    # observeEvent(input[[paste0("delete_column",x,2)]], {
+    #   removeUI(
+    #     selector = paste0("#div_",x)
+    #   )
+    # })
+    # })
+    # })
     
 # SANDBOX ###########################################################
 #     
