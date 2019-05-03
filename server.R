@@ -115,7 +115,6 @@ shinyServer(function(input, output, clientData, session) {
           insertUI(
             selector = "#add",
             where = "afterEnd",
-            # ui = tagList(
             ui = column(12,id = paste0("div_",x)
             , fluidRow(class = "variable-row"
                      , column(4
@@ -130,15 +129,18 @@ shinyServer(function(input, output, clientData, session) {
                      , column(1
                               , style = "margin-top: 25px;"
                               , actionButton(paste0("var_delete_",var_id), "Delete",icon=icon("trash"),style="background-color: red;")
-                              # , dynamic help buttons based on variable type selection!
+                              # , dynamic help buttons/tooltips based on variable type selection!
                      )
             )
           ))
           
+          # when a row trash icon / remove button is clicked
           observeEvent(input[[paste0("var_delete_",var_id)]], {
             removeUI(
               selector = paste0("#div_",x)
             )
+            variables$count <- variables$count - 1 , # decrement the counter by 1
+            
           })
           
           observeEvent(input[[paste0("var_type_",var_id)]], {
@@ -161,6 +163,43 @@ shinyServer(function(input, output, clientData, session) {
         })
 
     })
+    
+    AllInputs <- reactive({
+      x <- reactiveValuesToList(input)
+      data.frame(
+        names = names(x),
+        values = unlist(x, use.names = FALSE)
+      )
+    })
+
+    output$all_inputs_df <- renderDataTable({
+      datatable(
+        data.frame(
+          names = names(reactiveValuesToList(input)),
+          values = reactiveValuesToList(input)
+        )
+      )
+    })
+    
+    output$counter <- renderText({variables$count})
+    
+    output$all_inputs <- renderText({
+      names(reactiveValuesToList(input))
+      
+      # pull only var_names
+      # grepl("var_type_",c("a","var_type_","c"))
+      # find number of variables
+      # max(as.numeric(gsub("\\D", "", c("var_name_1","var_type_2"))))
+      # build the data frame on download or on preview via observe
+    }) 
+    
+    # keep a counter instead of reading reactive values?
+    variables <- reactiveValues(count = 4) # Defining & initializing the reactiveValues object
+    
+    observeEvent(input$add, {
+      variables$count <- variables$count + 1     # if the add button is clicked, increment the value by 1 and update it
+    })
+
     
 # SANDBOX ###########################################################
 #     
