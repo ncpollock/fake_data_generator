@@ -17,6 +17,7 @@ shinyUI(
                    , infoBoxOutput('df_columns')
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
+                   , textOutput("counter")
                    , column(12,style="text-align: center;",actionButton("add","Add New Variable",width = "80%"
                                             ,style="background-color: green;"
                                             ,icon = icon("plus-square")))
@@ -30,6 +31,10 @@ shinyUI(
                  , column(8,uiOutput("dynamic_inputs"))
                  , column(4,uiOutput("dynamic_inputs_2"))
                  , dataTableOutput('preview_fake_df')
+                 # ,       tableOutput('show_inputs')
+                 , textOutput("all_inputs")
+                 , dataTableOutput("all_inputs_df")
+
                  ),
                
                tabPanel('About/Help', icon = icon("question-circle"),tags$style("float: right;")
