@@ -112,12 +112,13 @@ shinyServer(function(input, output, clientData, session) {
           # eg names(mtcars); grep("wt",names(mtcars))
           var_id <- grep(x,names(fake_df()))
           
+          # put in function so I can reuse on add button! x = variables$counter + 1 # + 1 would create conflicts...
           insertUI(
             selector = "#add",
             where = "afterEnd",
             ui = column(12,id = paste0("div_",x)
             , fluidRow(class = "variable-row"
-                     , column(4
+                     , column(3
                               , style = "margin-top: 25px; border-right: 1px dashed black;"
                               , textInput(paste0("var_name_",var_id), NULL, x))
                      , column(4,id = paste0("var_type_col_",var_id)
@@ -125,10 +126,10 @@ shinyServer(function(input, output, clientData, session) {
                               , selectInput(paste0("var_type_",var_id), NULL
                                             # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
                                             , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
-                     , column(3,id = paste0("var_input_col_",var_id),sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10))
+                     , column(4,id = paste0("var_input_col_",var_id),sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10))
                      , column(1
                               , style = "margin-top: 25px;"
-                              , actionButton(paste0("var_delete_",var_id), "Delete",icon=icon("trash"),style="background-color: red;")
+                              , actionButton(paste0("var_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")
                               # , dynamic help buttons/tooltips based on variable type selection!
                      )
             )
@@ -139,8 +140,7 @@ shinyServer(function(input, output, clientData, session) {
             removeUI(
               selector = paste0("#div_",x)
             )
-            variables$count <- variables$count - 1 , # decrement the counter by 1
-            
+            variables$count <- variables$count - 1 # decrement the counter by 1
           })
           
           observeEvent(input[[paste0("var_type_",var_id)]], {
@@ -151,11 +151,13 @@ shinyServer(function(input, output, clientData, session) {
               # selector = paste0("#var_type_",var_id),
               selector = paste0("#var_type_col_",var_id)
               , where = "afterEnd"
-              , ui = column(3,id = paste0("var_input_col_",var_id),switch(
+              , ui = column(4,id = paste0("var_input_col_",var_id),switch(
                 input[[paste0("var_type_",var_id)]]
                 , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
                 , "Numeric" = sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10)
                 , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
+                , "Character String: Nominal" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
+                , "Character String: Long Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
               ))
             )
           })
