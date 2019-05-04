@@ -8,11 +8,11 @@
 # Define server logic required to draw a datatable
 shinyServer(function(input, output, clientData, session) {
     
-  fake_df <- reactive({
+  init_df <- reactive({
       
     n_participants <- 100 # the number of study participants
 
-    fake_df <- data.frame(
+    init_df <- data.frame(
       participant_id = 1:n_participants # arbitrary unique identifier
       , condition = sample(c("Control","Low Dose","High Dose"),n_participants,replace=TRUE)
       , weight = rnorm(n_participants,145,10)
@@ -21,24 +21,24 @@ shinyServer(function(input, output, clientData, session) {
     )
     
     # force difference means between control and experimental
-    fake_df$weight <- ifelse(fake_df$condition=="Control"
+    init_df$weight <- ifelse(init_df$condition=="Control"
                          , rnorm(n_participants,189,15)
                          , rnorm(n_participants,145,8))
       
-      fake_df
+      init_df
     })
     
-    output$preview_fake_df <- renderDataTable({
+    output$preview_init_df <- renderDataTable({
       
-      datatable(head(fake_df(),50),filter='top',options=list(scrollX=TRUE)) %>%
-        formatStyle(names(fake_df())
+      datatable(head(init_df(),50),filter='top',options=list(scrollX=TRUE)) %>%
+        formatStyle(names(init_df())
           , color="black")
 
     })
     
     output$df_columns <- renderInfoBox({
       
-      infoBox(ncol(fake_df()),
+      infoBox(ncol(init_df()),
                title = "Number of Columns"
                , icon=icon("columns")
                , color="black"
@@ -47,7 +47,7 @@ shinyServer(function(input, output, clientData, session) {
     
     output$df_rows <- renderInfoBox({
       
-      infoBox(nrow(fake_df()),
+      infoBox(nrow(init_df()),
                title = "Number of Rows",
                icon=icon("align-justify"),
                color="yellow",
@@ -56,155 +56,133 @@ shinyServer(function(input, output, clientData, session) {
     
     output$df_size <- renderInfoBox({
 
-      infoBox(format(object.size(fake_df()),units="Mb"),
+      infoBox(format(object.size(init_df()),units="Mb"),
                title="Dataset Size",
                icon=icon("expand-arrows-alt"),
                color="blue", fill=TRUE)
     })
     
 # dynamic ui ########################################################
-    
-    output$dynamic_inputs <- renderUI({
-      
-      lapply(names(fake_df()),function(x){
-      tagList(
-        fluidRow(class = "variable-row"
-          , column(4
-                 , style = "margin-top: 25px;"
-                 , textInput(paste0(x,grep(x,names(fake_df()))), NULL, x))
-          , column(4
-                   , style = "margin-top: 25px;"
-                   , selectInput(paste0("var_type",grep(x,names(fake_df()))), NULL
-                                 # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-                                 , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
-        , column(4
-                 , style = "margin-top: 25px;"
-                 , actionButton(paste0("delete_column",x), "Delete Column",icon=icon("trash"),style="background-color: red;")
-                   # , dynamic help buttons based on variable type selection!
-                   )
-      )
-      )
-      })
-    })
-    
-    output$dynamic_inputs_2 <- renderUI({
-      lapply(names(fake_df()),function(x){
-        # if (is.null(input[[paste0("var_type",grep(x,names(fake_df())))]]))
-        #   return()
-        fluidRow(class = "variable-row"
-          , switch(
-          input[[paste0("var_type",grep(x,names(fake_df())))]] # may need this in a different chunk
-          , "Sequential Primary Key" = , column(12, style = "padding-top: 25px;",p("Sequential integers from 1 to the number of rows. Can serve as a unique ID."))
-          , "Numeric" = column(12,sliderInput("dynamic", "",min = 1, max = 20, value = 10))
-          , "Date Range" = column(12,dateRangeInput("dynamic", ""))
-        ))
-        # )
-      })
-    })
 
-    output$test <- renderText({input$var_type2 })
-    
     # init a few columns
     observe({
 
-        lapply(names(fake_df()),function(x){
+        lapply(names(init_df()),function(x){
           
+          # get the number of each init_df column
           # eg names(mtcars); grep("wt",names(mtcars))
-          var_id <- grep(x,names(fake_df()))
+          var_id <- grep(x,names(init_df()))
           
-          # put in function so I can reuse on add button! x = variables$counter + 1 # + 1 would create conflicts...
           insertUI(
-            selector = "#add",
+            selector = "#var_header",
             where = "afterEnd",
-            ui = column(12,id = paste0("div_",x)
-            , fluidRow(class = "variable-row"
-                     , column(3
-                              , style = "margin-top: 25px; border-right: 1px dashed black;"
-                              , textInput(paste0("var_name_",var_id), NULL, x))
-                     , column(4,id = paste0("var_type_col_",var_id)
-                              , style = "margin-top: 25px; border-right: 1px dashed black;"
-                              , selectInput(paste0("var_type_",var_id), NULL
-                                            # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-                                            , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
-                     , column(4,id = paste0("var_input_col_",var_id),sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10))
-                     , column(1
-                              , style = "margin-top: 25px;"
-                              , actionButton(paste0("var_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")
-                              # , dynamic help buttons/tooltips based on variable type selection!
-                     )
-            )
-          ))
-          
-          # when a row trash icon / remove button is clicked
-          observeEvent(input[[paste0("var_delete_",var_id)]], {
-            removeUI(
-              selector = paste0("#div_",x)
-            )
-            variables$count <- variables$count - 1 # decrement the counter by 1
-          })
-          
-          observeEvent(input[[paste0("var_type_",var_id)]], {
-            removeUI(
-              selector = paste0("#var_input_col_",var_id)
-            )
-            insertUI(
-              # selector = paste0("#var_type_",var_id),
-              selector = paste0("#var_type_col_",var_id)
-              , where = "afterEnd"
-              , ui = column(4,id = paste0("var_input_col_",var_id),switch(
-                input[[paste0("var_type_",var_id)]]
-                , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
-                , "Numeric" = sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10)
-                , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
-                , "Character String: Nominal" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
-                , "Character String: Long Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
-              ))
-            )
-          })
+            ui = init_var(x = x, var_id = var_id)
+          )
           
         })
 
     })
     
-    AllInputs <- reactive({
-      x <- reactiveValuesToList(input)
-      data.frame(
-        names = names(x),
-        values = unlist(x, use.names = FALSE)
-      )
-    })
-
-    output$all_inputs_df <- renderDataTable({
-      datatable(
-        data.frame(
-          names = names(reactiveValuesToList(input)),
-          values = reactiveValuesToList(input)
-        )
-      )
+    # count the number of variables on the page
+    variable_count <- reactive({
+      inputs <- names(reactiveValuesToList(input))
+      max(as.numeric(
+        gsub(
+          "\\D", "",inputs))
+        , na.rm = TRUE) 
     })
     
-    output$counter <- renderText({variables$count})
-    
-    output$all_inputs <- renderText({
-      names(reactiveValuesToList(input))
-      
-      # pull only var_names
-      # grepl("var_type_",c("a","var_type_","c"))
-      # find number of variables
-      # max(as.numeric(gsub("\\D", "", c("var_name_1","var_type_2"))))
-      # build the data frame on download or on preview via observe
-    }) 
-    
-    # keep a counter instead of reading reactive values?
-    variables <- reactiveValues(count = 4) # Defining & initializing the reactiveValues object
-    
+    # add a new variable row when add button clicked
     observeEvent(input$add, {
-      variables$count <- variables$count + 1     # if the add button is clicked, increment the value by 1 and update it
+      inputs <- names(reactiveValuesToList(input))
+      new_id <- variable_count() + 1 # give the new variable the next available id number
+      
+      insertUI(
+        selector = "#var_header"
+        , where = "afterEnd"
+        , ui = init_var(x = paste0("variable_",new_id), var_id = new_id)
+      )
     })
 
+    # separate observer for adding new variables or removing existing variables
+    observe({
+      
+      if(is.finite(variable_count())){
+      lapply(1:variable_count(),function(var_id){
+    
+        # when a row trash icon / remove button is clicked
+        observeEvent(input[[paste0("var_delete_",var_id)]], {
+          removeUI(
+            selector = paste0("#div_var_",var_id)
+          )
+        })
+        
+        # when the variable type is changed
+        observeEvent(input[[paste0("var_type_",var_id)]], {
+          removeUI(
+            selector = paste0("#var_input_col_",var_id)
+          )
+          insertUI(
+            # selector = paste0("#var_type_",var_id),
+            selector = paste0("#var_type_col_",var_id)
+            , where = "afterEnd"
+            , ui = column(4,id = paste0("var_input_col_",var_id),switch(
+              input[[paste0("var_type_",var_id)]]
+              , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
+              , "Numeric" = sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10)
+              , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
+              , "Character String: Nominal" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
+              , "Character String: Long Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+            ))
+          )
+        })
+        
+      }) # lapply
+      } # if is.finite
+    }) #observe
+    
     
 # SANDBOX ###########################################################
 #     
+    
+    # output$dynamic_inputs <- renderUI({
+    #   
+    #   lapply(names(init_df()),function(x){
+    #   tagList(
+    #     fluidRow(class = "variable-row"
+    #       , column(4
+    #              , style = "margin-top: 25px;"
+    #              , textInput(paste0(x,grep(x,names(init_df()))), NULL, x))
+    #       , column(4
+    #                , style = "margin-top: 25px;"
+    #                , selectInput(paste0("var_type",grep(x,names(init_df()))), NULL
+    #                              # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+    #                              , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
+    #     , column(4
+    #              , style = "margin-top: 25px;"
+    #              , actionButton(paste0("delete_column",x), "Delete Column",icon=icon("trash"),style="background-color: red;")
+    #                # , dynamic help buttons based on variable type selection!
+    #                )
+    #   )
+    #   )
+    #   })
+    # })
+    # 
+    # output$dynamic_inputs_2 <- renderUI({
+    #   lapply(names(init_df()),function(x){
+    #     # if (is.null(input[[paste0("var_type",grep(x,names(init_df())))]]))
+    #     #   return()
+    #     fluidRow(class = "variable-row"
+    #       , switch(
+    #       input[[paste0("var_type",grep(x,names(init_df())))]] # may need this in a different chunk
+    #       , "Sequential Primary Key" = , column(12, style = "padding-top: 25px;",p("Sequential integers from 1 to the number of rows. Can serve as a unique ID."))
+    #       , "Numeric" = column(12,sliderInput("dynamic", "",min = 1, max = 20, value = 10))
+    #       , "Date Range" = column(12,dateRangeInput("dynamic", ""))
+    #     ))
+    #     # )
+    #   })
+    # })
+    
 #     output$inspect_vars <- renderUI({
 #       
 #       variable_output <- lapply(names(file_df()), function(i) {

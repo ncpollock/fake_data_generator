@@ -13,28 +13,23 @@ shinyUI(
                  'Generate Data', icon = icon("sliders")
                  , fluidRow(
                    useShinydashboard()
-                   # , verbatimTextOutput("test")
                    , infoBoxOutput('df_columns')
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
-                   , textOutput("counter")
                    , column(12,style="text-align: center;",actionButton("add","Add New Variable",width = "80%"
                                             ,style="background-color: green;"
                                             ,icon = icon("plus-square")))
+                   , column(12,id = "var_header",column(4,"Variable: Name"),column(4,"Type"),column(4,"Options"))
+                   
                    # test creating my own infobox
                    , box(background = "black"
                          , icon("columns fa-pull-left fa-5x")
                          , "Number of Columns"
                          , p("10",style="font-size:200%;"))
                  )
-                 , column(4,"Column: Name"),column(4,"Type"),column(4,"Options")
-                 , column(8,uiOutput("dynamic_inputs"))
-                 , column(4,uiOutput("dynamic_inputs_2"))
+                 # , column(8,uiOutput("dynamic_inputs"))
+                 # , column(4,uiOutput("dynamic_inputs_2"))
                  , dataTableOutput('preview_fake_df')
-                 # ,       tableOutput('show_inputs')
-                 , textOutput("all_inputs")
-                 , dataTableOutput("all_inputs_df")
-
                  ),
                
                tabPanel('About/Help', icon = icon("question-circle"),tags$style("float: right;")
