@@ -49,6 +49,29 @@ title_collapse <- function(x){
            ,'</strong>'))
 }
 
+
+init_var <- function(x,var_id){
+  column(12,id = paste0("div_var_",var_id)
+         , fluidRow(class = "variable-row"
+                    , column(3
+                             , style = "margin-top: 25px; border-right: 1px dashed black;"
+                             , textInput(paste0("var_name_",var_id), NULL, x))
+                    , column(4,id = paste0("var_type_col_",var_id)
+                             , style = "margin-top: 25px; border-right: 1px dashed black;"
+                             , selectInput(paste0("var_type_",var_id), NULL
+                                           # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+                                           , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
+                    , column(4,id = paste0("var_input_col_",var_id),sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10))
+                    , column(1
+                             , style = "margin-top: 25px;"
+                             , actionButton(paste0("var_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")
+                             # , dynamic help buttons/tooltips based on variable type selection!
+                    )
+         )
+  )
+}
+
+
 # set general theme for ggplots
 my_theme <- theme(panel.background = element_blank(),
                   axis.text = element_text(size = '15'),
