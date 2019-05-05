@@ -19,7 +19,7 @@ shinyUI(
                    , column(12,style="text-align: center;",actionButton("add","Add New Variable",width = "80%"
                                             ,style="background-color: green;"
                                             ,icon = icon("plus-square")))
-                   , column(12,id = "var_header",column(4,"Variable: Name"),column(4,"Type"),column(4,"Options"))
+                   , column(12,id = "var_header",column(4,"Variable Name"),column(4,"Type"),column(4,"Options"))
                    
                    # test creating my own infobox
                    , box(background = "black"
@@ -27,8 +27,6 @@ shinyUI(
                          , "Number of Columns"
                          , p("10",style="font-size:200%;"))
                  )
-                 # , column(8,uiOutput("dynamic_inputs"))
-                 # , column(4,uiOutput("dynamic_inputs_2"))
                  , dataTableOutput('preview_fake_df')
                  ),
                

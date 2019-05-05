@@ -49,6 +49,14 @@ title_collapse <- function(x){
            ,'</strong>'))
 }
 
+# var_type_selections <- c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")
+
+var_type_selections <- list(
+  'Numeric' 
+  , 'Character' = list("Nominal/Categorical","Long Filler Text")
+  , 'Date' = list("Date Range")
+  , 'Special' = list("Sequential Primary Key","Phone Numbers")
+)
 
 init_var <- function(x,var_id){
   column(12,id = paste0("div_var_",var_id)
@@ -60,8 +68,8 @@ init_var <- function(x,var_id){
                              , style = "margin-top: 25px; border-right: 1px dashed black;"
                              , selectInput(paste0("var_type_",var_id), NULL
                                            # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-                                           , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
-                    , column(4,id = paste0("var_input_col_",var_id),sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10))
+                                           , var_type_selections))
+                    , column(4,id = paste0("var_input_col_",var_id),p(""))
                     , column(1
                              , style = "margin-top: 25px;"
                              , actionButton(paste0("var_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")

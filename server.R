@@ -1,4 +1,8 @@
 
+#TO DO:
+  # handle fast add button clicking
+  # put add button at battom and insertui beforebegin
+
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
 
@@ -84,18 +88,34 @@ shinyServer(function(input, output, clientData, session) {
     })
     
     # count the number of variables on the page
+    # THIS IS THE PROBLEM!!!!
+    # Can I prevent this from tiggering? eg inside of observeEvent add button?
+      # eventReactive prevents from updating, but then everytime I hit add everything would be reset...
+      # I think that I do need local for this...
+    # or I go back to using a counter?
+    # variable_count <- eventReactive(input$add, {
+    #   inputs <- names(reactiveValuesToList(input))
+    #   max(as.numeric(
+    #     gsub(
+    #       "\\D", "",inputs))
+    #     , na.rm = TRUE) 
+    # })
     variable_count <- reactive({
-      inputs <- names(reactiveValuesToList(input))
-      max(as.numeric(
-        gsub(
-          "\\D", "",inputs))
-        , na.rm = TRUE) 
+      input$add + 4
+      # inputs <- names(reactiveValuesToList(input))
+      # # inputs <- 4
+      # max(as.numeric(
+      #   gsub(
+      #     "\\D", "",inputs))
+      #   , na.rm = TRUE) 
     })
     
     # add a new variable row when add button clicked
+    # use add button increment value!
     observeEvent(input$add, {
-      inputs <- names(reactiveValuesToList(input))
+      # inputs <- names(reactiveValuesToList(input))
       new_id <- variable_count() + 1 # give the new variable the next available id number
+      # new_id <- input$add + 4
       
       insertUI(
         selector = "#var_header"
@@ -106,9 +126,9 @@ shinyServer(function(input, output, clientData, session) {
 
     # separate observer for adding new variables or removing existing variables
     observe({
-      
-      if(is.finite(variable_count())){
-      lapply(1:variable_count(),function(var_id){
+      # isolate({
+      if(is.finite(variable_count())){ # don't need this anymore
+      lapply(1:(variable_count()+1),function(var_id){ 
     
         # when a row trash icon / remove button is clicked
         observeEvent(input[[paste0("var_delete_",var_id)]], {
@@ -117,30 +137,69 @@ shinyServer(function(input, output, clientData, session) {
           )
         })
         
+        # do I need isolate() here?
+        # or maybe a local reactive?
         # when the variable type is changed
         observeEvent(input[[paste0("var_type_",var_id)]], {
           removeUI(
             selector = paste0("#var_input_col_",var_id)
           )
+
+          
+          # could this be in observeEvent then just use variable_count() + 1 instead of lapply?
           insertUI(
-            # selector = paste0("#var_type_",var_id),
             selector = paste0("#var_type_col_",var_id)
             , where = "afterEnd"
             , ui = column(4,id = paste0("var_input_col_",var_id),switch(
               input[[paste0("var_type_",var_id)]]
               , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
-              , "Numeric" = sliderInput(paste0("var_input_",var_id), "",min = 1, max = 20, value = 10)
+              , "Numeric" = fluidRow(
+                                   column(4,numericInput(paste0("var_input_min_",var_id), "Min:", value = 0,width='100%'))
+                                   ,column(4,numericInput(paste0("var_input_max_",var_id), "Max:", value = 10,width='100%'))
+                                   ,column(4,numericInput(paste0("var_input_mean_",var_id), "Mean:", value = 10,width='100%'))
+                              )
+
               , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
-              , "Character String: Nominal" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
-              , "Character String: Long Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+              , "Nominal/Categorical" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
+
+              # should pull randomly from a full lorem ipsum implementation!
+              # instead just provide descriptive text that each row will containe random filler text, no need for an input here
+              , "Long Filler Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
             ))
           )
+        
         })
         
       }) # lapply
       } # if is.finite
+      # }) # isolate
     }) #observe
     
+    
+    # observeEvent(input$add, {
+    #   var_id <- variable_count() + 1
+    #   insertUI(
+    #     selector = paste0("#var_type_col_",var_id)
+    #     , where = "afterEnd"
+    #     , ui = column(4,id = paste0("var_input_col_",var_id),switch(
+    #       input[[paste0("var_type_",var_id)]]
+    #       , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
+    #       , "Numeric" = fluidRow(
+    #         column(4,numericInput(paste0("var_input_min_",var_id), "Min:", value = 0,width='100%'))
+    #         ,column(4,numericInput(paste0("var_input_max_",var_id), "Max:", value = 10,width='100%'))
+    #         ,column(4,numericInput(paste0("var_input_mean_",var_id), "Mean:", value = 10,width='100%'))
+    #       )
+    #       
+    #       , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
+    #       , "Nominal/Categorical" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
+    #       
+    #       # should pull randomly from a full lorem ipsum implementation!
+    #       # instead just provide descriptive text that each row will containe random filler text, no need for an input here
+    #       , "Long Filler Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+    #     ))
+    #   )
+    #   
+    # })
     
 # SANDBOX ###########################################################
 #     
