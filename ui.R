@@ -16,9 +16,12 @@ shinyUI(
                    , infoBoxOutput('df_columns')
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
-                   , column(12,style="text-align: center;",actionButton("add","Add New Variable",width = "80%"
-                                                                        ,style="background-color: green;"
-                                                                        ,icon = icon("plus-square")))
+                   , column(12,id="GlobalTools",class="sticky"
+                            # ,style="text-align: center;"
+                            ,actionButton("add","Add New Variable",width = "40%"
+                                          ,style="background-color: green;"
+                                          ,icon = icon("plus-square"))
+                            ,downloadButton("downloadData","Download"))
                    , column(12,id = "var_header",column(4,"Variable Name"),column(4,"Type"),column(4,"Options"))
 
                    # test creating my own infobox
@@ -26,10 +29,9 @@ shinyUI(
                          , icon("columns fa-pull-left fa-5x")
                          , "Number of Columns"
                          , p("10",style="font-size:200%;"))
-                 )
                  , tableOutput("show_inputs")
                  , dataTableOutput('preview_fake_df')
-                 ),
+                 )),
                
                tabPanel('About/Help', icon = icon("question-circle"),tags$style("float: right;")
                         ,p("Some inspirations:"

@@ -108,6 +108,13 @@ shinyServer(function(input, output, clientData, session) {
       All_Inputs() 
     })
     
+    # Downloadable csv of selected dataset ----
+    output$downloadData <- downloadHandler(
+      filename = "NP_FDG.csv"
+      , content = function(file) {
+        write.csv(init_df(), file, row.names = FALSE)
+      }
+    )
 # dynamic ui ########################################################
 
     # init a few columns
