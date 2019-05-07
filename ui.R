@@ -18,10 +18,13 @@ shinyUI(
                    , infoBoxOutput('df_size')
                    , column(12,id="GlobalTools",class="sticky"
                             # ,style="text-align: center;"
-                            ,actionButton("add","Add New Variable",width = "40%"
+                            , actionButton("add","Add New Variable",width = "40%"
                                           ,style="background-color: green;"
                                           ,icon = icon("plus-square"))
-                            ,downloadButton("downloadData","Download"))
+                            , actionButton("preview","Preview Data",width = "40%"
+                                          # ,style="background-color: green;"
+                                          ,icon = icon("binoculars"))
+                            , downloadButton("downloadData","Download",style="float:right;"))
                    , column(12,id = "var_header",column(4,"Variable Name"),column(4,"Type"),column(4,"Options"))
 
                    # test creating my own infobox

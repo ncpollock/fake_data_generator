@@ -197,8 +197,10 @@ shinyServer(function(input, output, clientData, session) {
                                    ,column(4,numericInput(paste0("var_input_mean_",var_id), "Mean:", value = 10,width='100%'))
                               )
 
+              # I think I should make the ps h6 instead and define custom style for them! eg padding, light gray, etc
               , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
               , "Nominal/Categorical" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
+              , "Phone Numbers" = p("Random U.S. Phone Numbers in the format 123-123-1234.")
 
               # should pull randomly from a full lorem ipsum implementation!
               # instead just provide descriptive text that each row will containe random filler text, no need for an input here

@@ -54,8 +54,8 @@ title_collapse <- function(x){
 var_type_selections <- list(
   'Numeric' 
   , 'Character' = list("Nominal/Categorical","Long Filler Text")
-  , 'Date' = list("Date Range")
-  , 'Special' = list("Sequential Primary Key","Phone Numbers")
+  , 'Date' = list("Date Range","Days of Week","Month")
+  , 'Other' = list("Sequential Primary Key","Names","Phone Numbers","States")
 )
 
 init_var <- function(x,var_id){
