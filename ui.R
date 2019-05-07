@@ -17,16 +17,17 @@ shinyUI(
                    , infoBoxOutput('df_rows')
                    , infoBoxOutput('df_size')
                    , column(12,style="text-align: center;",actionButton("add","Add New Variable",width = "80%"
-                                            ,style="background-color: green;"
-                                            ,icon = icon("plus-square")))
+                                                                        ,style="background-color: green;"
+                                                                        ,icon = icon("plus-square")))
                    , column(12,id = "var_header",column(4,"Variable Name"),column(4,"Type"),column(4,"Options"))
-                   
+
                    # test creating my own infobox
                    , box(background = "black"
                          , icon("columns fa-pull-left fa-5x")
                          , "Number of Columns"
                          , p("10",style="font-size:200%;"))
                  )
+                 , tableOutput("show_inputs")
                  , dataTableOutput('preview_fake_df')
                  ),
                

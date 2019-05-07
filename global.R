@@ -79,6 +79,8 @@ init_var <- function(x,var_id){
   )
 }
 
+# # keep a count of all variables trashed
+# removed_vars <- 0
 
 # set general theme for ggplots
 my_theme <- theme(panel.background = element_blank(),

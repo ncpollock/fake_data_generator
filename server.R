@@ -1,7 +1,7 @@
 
 #TO DO:
-  # handle fast add button clicking
-  # put add button at battom and insertui beforebegin
+  # make button sticky! w/ css?
+  # prevent user from deleting the last variable?
 
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
@@ -42,11 +42,36 @@ shinyServer(function(input, output, clientData, session) {
     
     output$df_columns <- renderInfoBox({
       
-      infoBox(ncol(init_df()),
-               title = "Number of Columns"
+      # # collect all inputs
+      # inputs <- data.frame(
+      #   vars = names(reactiveValuesToList(input))
+      # ) %>%
+      #   filter(grepl("div_var_",vars)) %>%
+      #   mutate(var_number = gsub("\\D", "",vars))
+      # 
+      variables <- (
+        All_Inputs() %>%
+          filter(grepl("var_name_",input_name,fixed = TRUE)) %>%
+          summarise(input_name = n_distinct(input_name)))$input_name
+          # mutate(var_number = gsub("\\D", "",vars)))$vars
+
+      # strip words to see numbers only
+      # variables <- max(as.numeric(variables), na.rm = TRUE)
+      
+      # inputs <- names(reactiveValuesToList(input))
+      # variables <- max(as.numeric(
+      #   gsub(
+      #     "\\D", "",inputs))
+      #   , na.rm = TRUE)
+      
+      # if(is.finite(variables)){ # don't need this anymore
+      
+      infoBox(variables,
+               title = "Number of Variables"
                , icon=icon("columns")
                , color="black"
                , fill = TRUE)
+      # }
     })
     
     output$df_rows <- renderInfoBox({
@@ -64,6 +89,23 @@ shinyServer(function(input, output, clientData, session) {
                title="Dataset Size",
                icon=icon("expand-arrows-alt"),
                color="blue", fill=TRUE)
+    })
+    
+    All_Inputs <- reactive({
+      myvalues <- NULL
+      for(i in 1:length(names(input))){
+        myvalues <- as.data.frame(rbind(myvalues,(cbind(names(input)[i],input[[names(input)[i]]]))))
+      }
+      names(myvalues) <- c("input_name","input_value")
+      myvalues %>%
+        filter(!is.null(input_value)
+               , input_value != "")
+      # collect numbers from var_name_
+      # filter all inputs to include only those with the ids that exist from var_name_
+    })
+    
+    output$show_inputs <- renderTable({
+      All_Inputs() 
     })
     
 # dynamic ui ########################################################
@@ -87,21 +129,9 @@ shinyServer(function(input, output, clientData, session) {
 
     })
     
-    # count the number of variables on the page
-    # THIS IS THE PROBLEM!!!!
-    # Can I prevent this from tiggering? eg inside of observeEvent add button?
-      # eventReactive prevents from updating, but then everytime I hit add everything would be reset...
-      # I think that I do need local for this...
-    # or I go back to using a counter?
-    # variable_count <- eventReactive(input$add, {
-    #   inputs <- names(reactiveValuesToList(input))
-    #   max(as.numeric(
-    #     gsub(
-    #       "\\D", "",inputs))
-    #     , na.rm = TRUE) 
-    # })
+    # use the add button counter to count the number of variables on the page
     variable_count <- reactive({
-      input$add + 4
+      input$add + ncol(init_df()) # give the new variable the next available id number
       # inputs <- names(reactiveValuesToList(input))
       # # inputs <- 4
       # max(as.numeric(
@@ -113,9 +143,7 @@ shinyServer(function(input, output, clientData, session) {
     # add a new variable row when add button clicked
     # use add button increment value!
     observeEvent(input$add, {
-      # inputs <- names(reactiveValuesToList(input))
-      new_id <- variable_count() + 1 # give the new variable the next available id number
-      # new_id <- input$add + 4
+      new_id <- variable_count()
       
       insertUI(
         selector = "#var_header"
@@ -127,14 +155,19 @@ shinyServer(function(input, output, clientData, session) {
     # separate observer for adding new variables or removing existing variables
     observe({
       # isolate({
-      if(is.finite(variable_count())){ # don't need this anymore
       lapply(1:(variable_count()+1),function(var_id){ 
     
+        # do I need to isolate these?
         # when a row trash icon / remove button is clicked
         observeEvent(input[[paste0("var_delete_",var_id)]], {
           removeUI(
             selector = paste0("#div_var_",var_id)
           )
+          # need to add each input id name to remove...
+          # lapply would work here...
+          session$sendInputMessage(paste0("var_name_",var_id), list(value = NULL))
+          session$sendInputMessage(paste0("var_type_",var_id), list(value = NULL))
+          
         })
         
         # do I need isolate() here?
@@ -145,8 +178,6 @@ shinyServer(function(input, output, clientData, session) {
             selector = paste0("#var_input_col_",var_id)
           )
 
-          
-          # could this be in observeEvent then just use variable_count() + 1 instead of lapply?
           insertUI(
             selector = paste0("#var_type_col_",var_id)
             , where = "afterEnd"
@@ -171,7 +202,6 @@ shinyServer(function(input, output, clientData, session) {
         })
         
       }) # lapply
-      } # if is.finite
       # }) # isolate
     }) #observe
     
