@@ -33,7 +33,7 @@ shinyUI(
                          , "Number of Columns"
                          , p("10",style="font-size:200%;"))
                  , tableOutput("show_inputs")
-                 , dataTableOutput('preview_fake_df')
+                 # , dataTableOutput('preview_init_df')
                  )),
                
                tabPanel('About/Help', icon = icon("question-circle"),tags$style("float: right;")

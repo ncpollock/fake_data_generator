@@ -1,6 +1,5 @@
 
 #TO DO:
-  # make button sticky! w/ css?
   # prevent user from deleting the last variable?
 
 # eval(parse(text = "1 + 1"))
@@ -31,47 +30,106 @@ shinyServer(function(input, output, clientData, session) {
       
       init_df
     })
+  
+  user_df <- reactive({
     
-    output$preview_init_df <- renderDataTable({
-      
-      datatable(head(init_df(),50),filter='top',options=list(scrollX=TRUE)) %>%
-        formatStyle(names(init_df())
-          , color="black")
-
+    # user_df <- data.frame(temp_var_placeholder = 1:100) %>% # replace with rows specified!
+    #   mutate_all(
+    #     ~case_when(
+    #       is.numeric(.) ~ 1
+    #       , . == "color" ~ 2
+    #   )) %>%
+    #   head()
+    # 
+    # # build all with mutate_all via single case_statement?
+    # diamonds %>%
+    #   mutate_all(~case_when(
+    #     is.numeric(.) ~ 1
+    #     , . == "color" ~ 2
+    #   )) %>%
+    #   head()
+    # 
+    # test_df <- data.frame(rows = 1:3)
+    # variables <- c("one","two","three")
+    # for(i in variables){
+    # test_df <- test_df %>% mutate(!!i := i)
+    # }
+    
+    # get number of rows
+    rows <- 100
+    
+    # get variable names specified by user
+    variables <- All_Inputs() %>%
+      filter(grepl("var_name_",input_name,fixed = TRUE))
+    
+    user_df <- data.frame(temp_var_placeholder = 1:rows) # replace with rows specified!
+    # for(i in variables$input_name){
+    #   user_df <- user_df %>% mutate(!!i := case_when(
+    #     input[[i]] == "Numeric" ~ 1
+    #     , input[[i]] == "notes" ~ "duh"
+    #   ))
+    # }
+    # lapply(variables$input_name,function(i){
+    #   if(input[[i]] == "Numeric" ){
+    #   user_df <<- user_df %>% mutate(!!i := 1)
+    #   } else if (input[[i]] == "notes"){
+    #   user_df <<- user_df %>% mutate(!!i := "duh")
+    #     
+    #   }
+    # })
+    
+    for(i in variables$input_name){
+      if(input[[i]] == "Numeric" ){
+        user_df <- user_df %>% mutate(!!i := 1)
+      } else if (input[[i]] == "notes"){
+        user_df <- user_df %>% mutate(!!i := "duh")
+        
+      } else {
+        user_df <- user_df %>% mutate(!!i := "yeaaaaa")
+      }
+    }
+    
+    user_df
+  })
+    
+    # output$preview_init_df <- renderDataTable({
+    #   
+    #   datatable(head(init_df(),50),options=list(dom = 't',scrollX=TRUE)) %>%
+    #     formatStyle(names(init_df())
+    #       , color="black")
+    # 
+    # })
+    
+  # http://haozhu233.github.io/kableExtra/awesome_table_in_html.html
+    output$preview_data <- function() {
+      user_df() %>%
+        slice(1:50) %>%
+        knitr::kable("html") %>%
+        row_spec(0, bold = T, color = "white", background = "black") %>%
+        kable_styling(bootstrap_options = c("striped", "hover")) %>%
+        footnote("Only the first 100 rows are shown in the preview.")
+    }
+    
+    observeEvent(input$preview,{
+      showModal(modalDialog(easyClose = TRUE,size = "l"
+        , title = tags$b("Data Preview")
+        , tableOutput('preview_data')
+        , class = "on_top"
+      ))
     })
     
-    output$df_columns <- renderInfoBox({
-      
-      # # collect all inputs
-      # inputs <- data.frame(
-      #   vars = names(reactiveValuesToList(input))
-      # ) %>%
-      #   filter(grepl("div_var_",vars)) %>%
-      #   mutate(var_number = gsub("\\D", "",vars))
-      # 
+    output$df_columns <- renderInfoBox({ # number of variables / columns
+    
       variables <- (
         All_Inputs() %>%
           filter(grepl("var_name_",input_name,fixed = TRUE)) %>%
           summarise(input_name = n_distinct(input_name)))$input_name
-          # mutate(var_number = gsub("\\D", "",vars)))$vars
 
-      # strip words to see numbers only
-      # variables <- max(as.numeric(variables), na.rm = TRUE)
-      
-      # inputs <- names(reactiveValuesToList(input))
-      # variables <- max(as.numeric(
-      #   gsub(
-      #     "\\D", "",inputs))
-      #   , na.rm = TRUE)
-      
-      # if(is.finite(variables)){ # don't need this anymore
-      
       infoBox(variables,
                title = "Number of Variables"
                , icon=icon("columns")
                , color="black"
                , fill = TRUE)
-      # }
     })
     
     output$df_rows <- renderInfoBox({
@@ -109,6 +167,8 @@ shinyServer(function(input, output, clientData, session) {
     })
     
     # Downloadable csv of selected dataset ----
+      # check that no two vars have same name
+      # other integrity constraints?
     output$downloadData <- downloadHandler(
       filename = "NP_FDG.csv"
       , content = function(file) {

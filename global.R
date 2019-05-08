@@ -22,14 +22,15 @@ library(shinydashboard)
 library(shinyWidgets)
 useShinydashboard()
 library(shinythemes)
-library(shinyBS)
-library(DT)
-library(googleVis)
-library(ggplot2)
-library(scales)
+# library(shinyBS)
+# library(DT) # datatable breaks input capturing!
+# library(googleVis)
+# library(ggplot2)
+# library(scales)
 library(dplyr)
 library(tidyr)
-library(maps)
+# library(maps)
+library(kableExtra)
 
 # specify the height of a container
 # could make an input to find the right height dynamically!
