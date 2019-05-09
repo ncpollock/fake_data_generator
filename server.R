@@ -1,6 +1,7 @@
 
 #TO DO:
   # prevent user from deleting the last variable?
+  # put dataset size on the preview page so it doesn't re-run with every change!
 
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
@@ -32,29 +33,6 @@ shinyServer(function(input, output, clientData, session) {
     })
   
   user_df <- reactive({
-    
-    # user_df <- data.frame(temp_var_placeholder = 1:100) %>% # replace with rows specified!
-    #   mutate_all(
-    #     ~case_when(
-    #       is.numeric(.) ~ 1
-    #       , . == "color" ~ 2
-    #   )) %>%
-    #   head()
-    # 
-    # # build all with mutate_all via single case_statement?
-    # diamonds %>%
-    #   mutate_all(~case_when(
-    #     is.numeric(.) ~ 1
-    #     , . == "color" ~ 2
-    #   )) %>%
-    #   head()
-    # 
-    # test_df <- data.frame(rows = 1:3)
-    # variables <- c("one","two","three")
-    # for(i in variables){
-    # test_df <- test_df %>% mutate(!!i := i)
-    # }
-    
     
     # get variable names specified by user
     variables <- All_Inputs() %>%
@@ -99,13 +77,27 @@ shinyServer(function(input, output, clientData, session) {
         }
         user_df <- user_df %>% 
           mutate(!!var := sample(month_var,input$df_rows,replace = TRUE))
-      } 
+      } else if (input[[paste0("var_type_",i)]] == "States"){
+        if(input[[paste0("var_state_abb_",i)]] == 0){
+          state_var <- state.name
+        } else {
+          state_var <- state.abb
+        }
+        user_df <- user_df %>% 
+          mutate(!!var := sample(state_var,input$df_rows,replace = TRUE))
+      } else if (input[[paste0("var_type_",i)]] == "Sequential Primary Key"){
+        user_df <- user_df %>% 
+          mutate(!!var := 1:input$df_rows)
+      }
+      
+      
+      
       # else {
       #   user_df <- user_df %>% mutate(!!var_name$input_value := "yeaaaaa")
-      # }
+      # } 
     }
     
-    user_df
+    user_df %>% select(-temp_var_placeholder)
   })
     
   # http://haozhu233.github.io/kableExtra/awesome_table_in_html.html
@@ -144,7 +136,7 @@ shinyServer(function(input, output, clientData, session) {
       
       infoBox(
         # nrow(init_df()),
-        numericInput("df_rows",label=NA,value=100),
+        sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE),
                title = "Number of Rows",
                icon=icon("align-justify"),
                color="yellow",
@@ -282,6 +274,12 @@ shinyServer(function(input, output, clientData, session) {
                                       , choices = list("Full Names" = 0, "Abbreviations" = 1)
                                       , selected = 0))
                 , column(8,p("Month names or abbreviations. For example, 'January' or 'Jan'"))
+              )
+              , "States" = fluidRow(
+                column(4,radioButtons(paste0("var_state_abb_",var_id), label = ""
+                                      , choices = list("Full Names" = 0, "Abbreviations" = 1)
+                                      , selected = 0))
+                , column(8,p("State names or abbreviations. For example, 'Michigan' or 'MI'"))
               )
             ))
           )
