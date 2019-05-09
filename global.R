@@ -32,6 +32,11 @@ library(tidyr)
 # library(maps)
 library(kableExtra)
 
+# load file resources
+lorem_ipsum <- readLines("lorem_ipsum.txt") %>%
+  strsplit(".",fixed=TRUE) %>%
+  sapply(trimws)
+
 # specify the height of a container
 # could make an input to find the right height dynamically!
 static_height <- div(style = "height:50px !importanat;background-color: yellow;")
