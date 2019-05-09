@@ -55,50 +55,42 @@ shinyServer(function(input, output, clientData, session) {
     # test_df <- test_df %>% mutate(!!i := i)
     # }
     
-    # get number of rows
-    rows <- 100
     
     # get variable names specified by user
     variables <- All_Inputs() %>%
       filter(grepl("var_name_",input_name,fixed = TRUE))
     
-    user_df <- data.frame(temp_var_placeholder = 1:rows) # replace with rows specified!
-    # for(i in variables$input_name){
-    #   user_df <- user_df %>% mutate(!!i := case_when(
-    #     input[[i]] == "Numeric" ~ 1
-    #     , input[[i]] == "notes" ~ "duh"
-    #   ))
-    # }
-    # lapply(variables$input_name,function(i){
-    #   if(input[[i]] == "Numeric" ){
-    #   user_df <<- user_df %>% mutate(!!i := 1)
-    #   } else if (input[[i]] == "notes"){
-    #   user_df <<- user_df %>% mutate(!!i := "duh")
-    #     
-    #   }
-    # })
+    # duplicate identifiers # need dummy method
+    # test_wide <- All_Inputs() %>%
+    #   select(-input_name) %>%
+    #   spread(input_type,input_value)
     
-    for(i in variables$input_name){
-      if(input[[i]] == "Numeric" ){
-        user_df <- user_df %>% mutate(!!i := 1)
-      } else if (input[[i]] == "notes"){
-        user_df <- user_df %>% mutate(!!i := "duh")
+    user_df <- data.frame(temp_var_placeholder = 1:input$df_rows) # replace with rows specified!
+    for(i in variables$input_number){
+    # for(i in variables$input_name){
+      #if I organize All_Inputs longways, this would be reduced to one line?
+      # var_name <- All_Inputs() %>% filter(input_name == i)
+      var_name <- All_Inputs() %>% filter(input_name == paste0("var_name_",i))
+      var_type <- All_Inputs() %>% filter(input_name == paste0("var_type_",i))
+      test <- unique(as.character(var_name$input_value))
+      # if(input[[paste0("var_type_",i)]] == "Numeric" ){
+      if(input[[paste0("var_type_",i)]] == "Phone Numbers" ){
+        # user_df <- user_df %>% mutate(!!var_name$input_value := 1)
+        # user_df <- user_df %>% mutate(!!test := var_name$input_value) # works!
+        user_df <- user_df %>% mutate(!!as.character(var_name$input_value) := sapply(1:input$df_rows,function(x){paste(sample(100:999,1),sample(100:999,1),sample(1000:9990,1),sep="-")}))
         
-      } else {
-        user_df <- user_df %>% mutate(!!i := "yeaaaaa")
+        
       }
+      # else if (input[[paste0("var_name_",i)]] == "notes"){
+      #   user_df <- user_df %>% mutate(!!var_name$input_value := "duh")
+      #   
+      # } else {
+      #   user_df <- user_df %>% mutate(!!var_name$input_value := "yeaaaaa")
+      # }
     }
     
     user_df
   })
-    
-    # output$preview_init_df <- renderDataTable({
-    #   
-    #   datatable(head(init_df(),50),options=list(dom = 't',scrollX=TRUE)) %>%
-    #     formatStyle(names(init_df())
-    #       , color="black")
-    # 
-    # })
     
   # http://haozhu233.github.io/kableExtra/awesome_table_in_html.html
     output$preview_data <- function() {
@@ -134,7 +126,9 @@ shinyServer(function(input, output, clientData, session) {
     
     output$df_rows <- renderInfoBox({
       
-      infoBox(nrow(init_df()),
+      infoBox(
+        # nrow(init_df()),
+        numericInput("df_rows",label=NA,value=100),
                title = "Number of Rows",
                icon=icon("align-justify"),
                color="yellow",
@@ -157,7 +151,9 @@ shinyServer(function(input, output, clientData, session) {
       names(myvalues) <- c("input_name","input_value")
       myvalues %>%
         filter(!is.null(input_value)
-               , input_value != "")
+               , input_value != "") %>%
+        mutate(input_number = as.integer(gsub("\\D", "",input_name))
+               , input_type = gsub("_[1-9]","",input_name))
       # collect numbers from var_name_
       # filter all inputs to include only those with the ids that exist from var_name_
     })
@@ -230,6 +226,7 @@ shinyServer(function(input, output, clientData, session) {
           removeUI(
             selector = paste0("#div_var_",var_id)
           )
+          # nullify inputs that are removed from ui
           # need to add each input id name to remove...
           # lapply would work here...
           session$sendInputMessage(paste0("var_name_",var_id), list(value = NULL))
@@ -252,9 +249,9 @@ shinyServer(function(input, output, clientData, session) {
               input[[paste0("var_type_",var_id)]]
               , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
-                                   column(4,numericInput(paste0("var_input_min_",var_id), "Min:", value = 0,width='100%'))
-                                   ,column(4,numericInput(paste0("var_input_max_",var_id), "Max:", value = 10,width='100%'))
-                                   ,column(4,numericInput(paste0("var_input_mean_",var_id), "Mean:", value = 10,width='100%'))
+                                   column(4,numericInput(paste0("var_min_",var_id), "Min:", value = 0,width='100%'))
+                                   ,column(4,numericInput(paste0("var_max_",var_id), "Max:", value = 10,width='100%'))
+                                   ,column(4,numericInput(paste0("var_mean_",var_id), "Mean:", value = 10,width='100%'))
                               )
 
               # I think I should make the ps h6 instead and define custom style for them! eg padding, light gray, etc
