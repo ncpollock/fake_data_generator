@@ -67,24 +67,40 @@ shinyServer(function(input, output, clientData, session) {
     
     user_df <- data.frame(temp_var_placeholder = 1:input$df_rows) # replace with rows specified!
     for(i in variables$input_number){
-    # for(i in variables$input_name){
+
       #if I organize All_Inputs longways, this would be reduced to one line?
-      # var_name <- All_Inputs() %>% filter(input_name == i)
       var_name <- All_Inputs() %>% filter(input_name == paste0("var_name_",i))
       var_type <- All_Inputs() %>% filter(input_name == paste0("var_type_",i))
-      test <- unique(as.character(var_name$input_value))
-      # if(input[[paste0("var_type_",i)]] == "Numeric" ){
+      var_min <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_min_",i)))$input_value)
+      var_max <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_max_",i)))$input_value)
+      var_mean <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_mean_",i)))$input_value)
+      var_sd <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_sd_",i)))$input_value)
+
+      var <- as.character(var_name$input_value)
+      # put most frequently used at top to maximize performance!
       if(input[[paste0("var_type_",i)]] == "Phone Numbers" ){
-        # user_df <- user_df %>% mutate(!!var_name$input_value := 1)
-        # user_df <- user_df %>% mutate(!!test := var_name$input_value) # works!
-        user_df <- user_df %>% mutate(!!as.character(var_name$input_value) := sapply(1:input$df_rows,function(x){paste(sample(100:999,1),sample(100:999,1),sample(1000:9990,1),sep="-")}))
-        
-        
-      }
-      # else if (input[[paste0("var_name_",i)]] == "notes"){
-      #   user_df <- user_df %>% mutate(!!var_name$input_value := "duh")
-      #   
-      # } else {
+        user_df <- user_df %>% 
+          mutate(!!var := sapply(1:input$df_rows,function(x){
+            paste(sample(100:999,1),sample(100:999,1),sample(1000:9990,1),sep="-")
+            }))
+
+      } else if (input[[paste0("var_type_",i)]] == "Numeric"){
+        user_df <- user_df %>% 
+          mutate(!!var := qnorm(
+            runif(input$df_rows
+                  , pnorm(var_min, mean=var_mean, sd=var_sd)
+                  , pnorm(var_max, mean=var_mean, sd=var_sd))
+            , mean=var_mean, sd=var_sd) )
+      } else if (input[[paste0("var_type_",i)]] == "Month"){
+        if(input[[paste0("var_month_abb_",i)]] == 0){
+          month_var <- month.name
+        } else {
+          month_var <- month.abb
+        }
+        user_df <- user_df %>% 
+          mutate(!!var := sample(month_var,input$df_rows,replace = TRUE))
+      } 
+      # else {
       #   user_df <- user_df %>% mutate(!!var_name$input_value := "yeaaaaa")
       # }
     }
@@ -220,6 +236,7 @@ shinyServer(function(input, output, clientData, session) {
       # isolate({
       lapply(1:(variable_count()+1),function(var_id){ 
     
+        var_input_id <- paste0("var_input_",var_id)
         # do I need to isolate these?
         # when a row trash icon / remove button is clicked
         observeEvent(input[[paste0("var_delete_",var_id)]], {
@@ -249,19 +266,23 @@ shinyServer(function(input, output, clientData, session) {
               input[[paste0("var_type_",var_id)]]
               , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
-                                   column(4,numericInput(paste0("var_min_",var_id), "Min:", value = 0,width='100%'))
-                                   ,column(4,numericInput(paste0("var_max_",var_id), "Max:", value = 10,width='100%'))
-                                   ,column(4,numericInput(paste0("var_mean_",var_id), "Mean:", value = 10,width='100%'))
+                                   column(3,numericInput(paste0("var_min_",var_id), "Min:", value = 0,width='100%'))
+                                   ,column(3,numericInput(paste0("var_max_",var_id), "Max:", value = 10,width='100%'))
+                                   ,column(3,numericInput(paste0("var_mean_",var_id), "Mean:", value = 5,width='100%'))
+                                   ,column(3,numericInput(paste0("var_sd_",var_id), "SD:", value = 1,width='100%'))
                               )
 
               # I think I should make the ps h6 instead and define custom style for them! eg padding, light gray, etc
-              , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
-              , "Nominal/Categorical" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
-              , "Phone Numbers" = p("Random U.S. Phone Numbers in the format 123-123-1234.")
-
-              # should pull randomly from a full lorem ipsum implementation!
-              # instead just provide descriptive text that each row will containe random filler text, no need for an input here
-              , "Long Filler Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+              , "Date Range" = dateRangeInput(var_input_id, "")
+              , "Nominal/Categorical" = textInput(var_input_id,"","experimental,low dose,high dose")
+              , "Phone Numbers" = p("U.S. Phone Numbers in the format 123-123-1234.")
+              , "Long Filler Text" = p("Sentences from Lorem Ipsum.")
+              , "Month" = fluidRow(
+                column(4,radioButtons(paste0("var_month_abb_",var_id), label = ""
+                                      , choices = list("Full Names" = 0, "Abbreviations" = 1)
+                                      , selected = 0))
+                , column(8,p("Month names or abbreviations. For example, 'January' or 'Jan'"))
+              )
             ))
           )
         

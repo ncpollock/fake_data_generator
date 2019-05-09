@@ -25,7 +25,7 @@ shinyUI(
                                           # ,style="background-color: green;"
                                           ,icon = icon("binoculars"))
                             , downloadButton("downloadData","Download",style="float:right;"))
-                   , column(12,id = "var_header",column(4,"Variable Name"),column(4,"Type"),column(4,"Options"))
+                   , column(12,id = "var_header",column(3,"Variable Name"),column(4,"Type"),column(4,"Options / Details"))
 
                    # test creating my own infobox
                    , box(background = "black"
