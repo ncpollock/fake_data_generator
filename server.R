@@ -113,6 +113,11 @@ shinyServer(function(input, output, clientData, session) {
       }  else if (input[[paste0("var_type_",i)]] == "Nominal/Categorical"){
         user_df <- user_df %>% 
           mutate(!!var := lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) ))
+        
+      }  else if (input[[paste0("var_type_",i)]] == "Date Range"){
+        date_range <- input[[paste0("var_input_",i)]]
+        user_df <- user_df %>% 
+          mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(date_range[1],date_range[2],1),1)))
       }
       
       
