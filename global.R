@@ -37,26 +37,30 @@ lorem_ipsum <- readLines("lorem_ipsum.txt") %>%
   strsplit(".",fixed=TRUE) %>%
   sapply(trimws)
 
-# specify the height of a container
-# could make an input to find the right height dynamically!
-static_height <- div(style = "height:50px !importanat;background-color: yellow;")
+# weekdays
+# weekdays(seq.Date(as.Date("2017-01-01"),as.Date("2017-01-07"),1))
+# weekdays(seq.Date(as.Date("2017-01-01"),as.Date("2017-01-07"),1),abbreviate = TRUE)
+weekday_full <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+weekday_abb <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
 # style column names / header for datatables
-dt_column_head <- JS(
-  "function(settings, json) {",
-  "$(this.api().table().header()).css({'background-color': '#3d3d3d', 'color': '#fff'});",
-  "}")
+# dt_column_head <- JS(
+#   "function(settings, json) {",
+#   "$(this.api().table().header()).css({'background-color': '#3d3d3d', 'color': '#fff'});",
+#   "}")
 
 # allow box collapse on title click
-title_collapse <- function(x){
-  HTML(
-    paste0('<strong class="box-title" data-widget="collapse" style="cursor: pointer;">'
-           ,x
-           ,'</strong>'))
-}
+# title_collapse <- function(x){
+#   HTML(
+#     paste0('<strong class="box-title" data-widget="collapse" style="cursor: pointer;">'
+#            ,x
+#            ,'</strong>'))
+# }
 
 # var_type_selections <- c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")
 
+# should sequential primary key be under Numeric?
+  # grouped sequence, then user picks a character variable?
 var_type_selections <- list(
   'Numeric' 
   , 'Character' = list("Nominal/Categorical","Long Filler Text")
@@ -85,81 +89,14 @@ init_var <- function(x,var_id){
   )
 }
 
-# # keep a count of all variables trashed
-# removed_vars <- 0
 
 # set general theme for ggplots
-my_theme <- theme(panel.background = element_blank(),
-                  axis.text = element_text(size = '15'),
-                  axis.title = element_text(size = '18'),
-                  axis.line = element_line(color = 'black'),
-                  strip.background = element_rect(fill = 'black'),
-                  strip.text = element_text(color = 'white',size = '18'),
-                  legend.position = "bottom",
-                  legend.text = element_text(size = '18'),
-                  legend.title = element_blank())
-
-custom_colors <- ""
-# 
-# # use custom color pallette across app
-# custom_colors <- HTML(paste0('
-#                                          /* logo */
-#                              .skin-blue .main-header .logo {
-#                              background-color:',maroon1,';
-#                              }
-#                              
-#                              /* logo when hovered */
-#                              .skin-blue .main-header .logo:hover {
-#                              background-color:',maroon1,';
-#                              }
-#                              
-#                              /* toggle button when hovered  */
-#                              .skin-blue .main-header .navbar .sidebar-toggle:hover{
-#                              background-color:',v_dark_gray,';
-#                              }
-#                              
-#                              /* navbar (rest of the header) */
-#                              .skin-blue .main-header .navbar {
-#                              background-color:',maroon1,';
-#                              }
-#                              
-#                              /* main sidebar */
-#                              .skin-blue .main-sidebar {
-#                              background-color:',v_dark_gray,';
-#                              }
-#                              
-#                              .skin-blue .sidebar-menu > li:hover > a,
-#                              .skin-blue .sidebar-menu > li.active > a {
-#                              color: white;
-#                              background:',maroon1,';
-#                              border-left-color:',maroon1,';
-#                              }
-#                              .skin-blue .sidebar-menu > li > .treeview-menu {
-#                              margin: 0 1px;
-#                              background:',med_gray,';
-#                              }
-#                              .skin-blue .treeview-menu > li.active > a,
-#                              .skin-blue .treeview-menu > li > a:hover {
-#                              color: white;
-#                              background:',maroon1,';
-#                              }
-#                              
-#                              .skin-blue .sidebar a {
-#                              color: white;
-#                              }
-#                              .skin-blue .treeview-menu > li > a {
-#                              color: white;
-#                              }
-#                              
-#                              .small-box h3 {
-#                              font-size: 38px;
-#                              font-weight: 700;
-#                              margin: 0 0 10px;
-#                              white-space: nowrap;
-#                              padding: 0;
-#                              }
-#                              .bg-primary {
-#                              color: #fff;
-#                              background-color: #337ab7;
-#                              }
-#                              '))
+# my_theme <- theme(panel.background = element_blank(),
+#                   axis.text = element_text(size = '15'),
+#                   axis.title = element_text(size = '18'),
+#                   axis.line = element_line(color = 'black'),
+#                   strip.background = element_rect(fill = 'black'),
+#                   strip.text = element_text(color = 'white',size = '18'),
+#                   legend.position = "bottom",
+#                   legend.text = element_text(size = '18'),
+#                   legend.title = element_blank())
