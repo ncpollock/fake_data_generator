@@ -49,11 +49,15 @@ shinyServer(function(input, output, clientData, session) {
       #if I organize All_Inputs longways, this would be reduced to one line?
       var_name <- All_Inputs() %>% filter(input_name == paste0("var_name_",i))
       var_type <- All_Inputs() %>% filter(input_name == paste0("var_type_",i))
-      var_min <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_min_",i)))$input_value)
-      var_max <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_max_",i)))$input_value)
-      var_mean <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_mean_",i)))$input_value)
-      var_sd <- as.numeric((All_Inputs() %>% filter(input_name == paste0("var_sd_",i)))$input_value)
+      
+      #going straight to as.integer and as.numeric both caused strange behavior!
+      var_min <- as.numeric(as.character((All_Inputs() %>% filter(input_name == paste0("var_min_",i)))$input_value))
+      var_max <- as.numeric(as.character((All_Inputs() %>% filter(input_name == paste0("var_max_",i)))$input_value))
+      var_mean <- as.numeric(as.character((All_Inputs() %>% filter(input_name == paste0("var_mean_",i)))$input_value))
+      var_sd <- as.numeric(as.character((All_Inputs() %>% filter(input_name == paste0("var_sd_",i)))$input_value))
 
+      var_input <- as.character((All_Inputs() %>% filter(input_name == paste0("var_input_",i)))$input_value)
+      
       var <- as.character(var_name$input_value)
       # put most frequently used at top to maximize performance!
       if(input[[paste0("var_type_",i)]] == "Phone Numbers" ){
@@ -64,11 +68,13 @@ shinyServer(function(input, output, clientData, session) {
 
       } else if (input[[paste0("var_type_",i)]] == "Numeric"){
         user_df <- user_df %>% 
+          # mutate(!!var := var_max)
           mutate(!!var := qnorm(
             runif(input$df_rows
                   , pnorm(var_min, mean=var_mean, sd=var_sd)
                   , pnorm(var_max, mean=var_mean, sd=var_sd))
             , mean=var_mean, sd=var_sd) )
+        
       } else if (input[[paste0("var_type_",i)]] == "Month"){
         if(input[[paste0("var_month_abb_",i)]] == 0){
           month_var <- month.name
@@ -77,6 +83,7 @@ shinyServer(function(input, output, clientData, session) {
         }
         user_df <- user_df %>% 
           mutate(!!var := sample(month_var,input$df_rows,replace = TRUE))
+        
       } else if (input[[paste0("var_type_",i)]] == "States"){
         if(input[[paste0("var_state_abb_",i)]] == 0){
           state_var <- state.name
@@ -85,16 +92,31 @@ shinyServer(function(input, output, clientData, session) {
         }
         user_df <- user_df %>% 
           mutate(!!var := sample(state_var,input$df_rows,replace = TRUE))
+        
       } else if (input[[paste0("var_type_",i)]] == "Sequential Primary Key"){
         user_df <- user_df %>% 
           mutate(!!var := 1:input$df_rows)
+        
+      }  else if (input[[paste0("var_type_",i)]] == "Long Filler Text"){
+        user_df <- user_df %>% 
+          mutate(!!var := lapply(1:input$df_rows,function(x) lorem_ipsum[sample(1:length(lorem_ipsum),1)] ))
+        
+      } else if (input[[paste0("var_type_",i)]] == "Days of Week"){
+        if(input[[paste0("var_days_abb_",i)]] == 0){
+          day_var <- weekday_full
+        } else {
+          day_var <- weekday_abb
+        }
+        user_df <- user_df %>% 
+          mutate(!!var := sample(day_var,input$df_rows,replace = TRUE))
+        
+      }  else if (input[[paste0("var_type_",i)]] == "Nominal/Categorical"){
+        user_df <- user_df %>% 
+          mutate(!!var := lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) ))
       }
       
       
-      
-      # else {
-      #   user_df <- user_df %>% mutate(!!var_name$input_value := "yeaaaaa")
-      # } 
+
     }
     
     user_df %>% select(-temp_var_placeholder)
@@ -183,7 +205,6 @@ shinyServer(function(input, output, clientData, session) {
 
     # init a few columns
     observe({
-
         lapply(names(init_df()),function(x){
           
           # get the number of each init_df column
@@ -197,7 +218,17 @@ shinyServer(function(input, output, clientData, session) {
           )
           
         })
-
+    })
+    
+    observe({ # init the page with a few types selected
+      if(!is.null(input$var_name_4)){
+        updateSelectInput(session, "var_type_1",NULL,var_type_selections
+                          ,selected = "Sequential Primary Key")
+        updateSelectInput(session, "var_type_2",NULL,var_type_selections
+                          ,selected = "Nominal/Categorical")
+        updateSelectInput(session, "var_type_4",NULL,var_type_selections
+                          ,selected = "Long Filler Text")
+      }
     })
     
     # use the add button counter to count the number of variables on the page
@@ -256,7 +287,7 @@ shinyServer(function(input, output, clientData, session) {
             , where = "afterEnd"
             , ui = column(4,id = paste0("var_input_col_",var_id),switch(
               input[[paste0("var_type_",var_id)]]
-              , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
+              , "Sequential Primary Key" = , h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
                                    column(3,numericInput(paste0("var_min_",var_id), "Min:", value = 0,width='100%'))
                                    ,column(3,numericInput(paste0("var_max_",var_id), "Max:", value = 10,width='100%'))
@@ -267,19 +298,26 @@ shinyServer(function(input, output, clientData, session) {
               # I think I should make the ps h6 instead and define custom style for them! eg padding, light gray, etc
               , "Date Range" = dateRangeInput(var_input_id, "")
               , "Nominal/Categorical" = textInput(var_input_id,"","experimental,low dose,high dose")
-              , "Phone Numbers" = p("U.S. Phone Numbers in the format 123-123-1234.")
-              , "Long Filler Text" = p("Sentences from Lorem Ipsum.")
+              , "Phone Numbers" = h6("U.S. Phone Numbers in the format 123-123-1234.")
+              , "Long Filler Text" = h6("Sentences from Lorem Ipsum.")
+              , "Names" = h6('First and Last names. For example, "John Smith" or "Jane Doe"')
               , "Month" = fluidRow(
                 column(4,radioButtons(paste0("var_month_abb_",var_id), label = ""
                                       , choices = list("Full Names" = 0, "Abbreviations" = 1)
                                       , selected = 0))
-                , column(8,p("Month names or abbreviations. For example, 'January' or 'Jan'"))
+                , column(8,h6("Month names or abbreviations. For example, 'January' or 'Jan'"))
               )
               , "States" = fluidRow(
                 column(4,radioButtons(paste0("var_state_abb_",var_id), label = ""
                                       , choices = list("Full Names" = 0, "Abbreviations" = 1)
                                       , selected = 0))
-                , column(8,p("State names or abbreviations. For example, 'Michigan' or 'MI'"))
+                , column(8,h6("State names or abbreviations. For example, 'Michigan' or 'MI'"))
+              )
+              , "Days of Week" = fluidRow(
+                column(4,radioButtons(paste0("var_days_abb_",var_id), label = ""
+                                      , choices = list("Full Names" = 0, "Abbreviations" = 1)
+                                      , selected = 0))
+                , column(8,h6("Day names or abbreviations. For example, 'Monday' or 'Mon'"))
               )
             ))
           )
@@ -289,32 +327,6 @@ shinyServer(function(input, output, clientData, session) {
       }) # lapply
       # }) # isolate
     }) #observe
-    
-    
-    # observeEvent(input$add, {
-    #   var_id <- variable_count() + 1
-    #   insertUI(
-    #     selector = paste0("#var_type_col_",var_id)
-    #     , where = "afterEnd"
-    #     , ui = column(4,id = paste0("var_input_col_",var_id),switch(
-    #       input[[paste0("var_type_",var_id)]]
-    #       , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
-    #       , "Numeric" = fluidRow(
-    #         column(4,numericInput(paste0("var_input_min_",var_id), "Min:", value = 0,width='100%'))
-    #         ,column(4,numericInput(paste0("var_input_max_",var_id), "Max:", value = 10,width='100%'))
-    #         ,column(4,numericInput(paste0("var_input_mean_",var_id), "Mean:", value = 10,width='100%'))
-    #       )
-    #       
-    #       , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
-    #       , "Nominal/Categorical" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
-    #       
-    #       # should pull randomly from a full lorem ipsum implementation!
-    #       # instead just provide descriptive text that each row will containe random filler text, no need for an input here
-    #       , "Long Filler Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
-    #     ))
-    #   )
-    #   
-    # })
     
 # SANDBOX ###########################################################
 #     
@@ -357,188 +369,29 @@ shinyServer(function(input, output, clientData, session) {
     #   })
     # })
     
-#     output$inspect_vars <- renderUI({
-#       
-#       variable_output <- lapply(names(file_df()), function(i) {
-# 
-#         level_counts <- paste0("table1_",i)
-#         level_detail <- paste0("table1_1_",i)
-#         stat_summaries <- paste0("table2_",i)
-#         textname_var <- paste("text", i, sep="")
-#         selected_row <- paste("sr", i, sep="")
-#         
-#         inspect_histogram <- paste0("plot1_",i)
-#         inspect_bar <- paste0("plot2_",i)
-#         
-#           if(is.numeric(file_df()[[i]])){
-#             list(box(width = 12,collapsible = TRUE,collapsed = FALSE,solidHeader = TRUE,status = 'success',
-#                        title=p(title_collapse(i),": Variable is numeric"),
-#                        box(width=4,DT::dataTableOutput(stat_summaries)),
-#                      box(width=8,plotOutput(inspect_histogram),
-#                          sliderInput(paste0("inspect_bin",i),
-#                                      "Bins:",
-#                                      # should be number of non-missing values, not number of rows...
-#                                      min = 1,  max = 50,value = ifelse(2*nrow(file_df())^(1/3)>50,50,2*nrow(file_df())^(1/3))
-#                                      ))
-#                      ))
-# 
-#           } else {
-#             list(
-#               box(width = 12,collapsible = TRUE,collapsed = FALSE,solidHeader = TRUE,status = 'warning',
-#                   title=p(title_collapse(i),": Variable is not numeric"),
-#                   box(DT::dataTableOutput(level_detail),width=4),
-#                   box(DT::dataTableOutput(level_counts),width=8)
-#               # ,box(width=8,plotOutput(inspect_bar)) # if I want to go back to plots for character vars
-#               )) }
-#         
-#         # could add in other checks for dates, booleans, lat/lon/geo, etc
-#         
-#           # ,list(p("Each variable gets either a plot or a table, but every variable gets this nice paragraphs.")))
-#       })
-#       local_reactive_inspect_vars()
-#       do.call(tagList, variable_output)
-#       # }
-#     })
-#     
-#     
-#     local_reactive_inspect_vars <- reactive({
-#       for (i in names(file_df())) {
-# 
-#         # Need local so that each item gets its own number. Without it, the value
-#         # of i in the renderPlot() will be the same across all instances, because
-#         # of when the expression is evaluated.
-#         local({
-#           my_i <- i
-#           j <- sym(i) # symbolize quoted variable name for use in dplyr programming
-#           
-#           #get variable name
-#           textname_var <- paste("text", my_i, sep="")
-#           output[[textname_var]] <- renderText(my_i)
-#           
-#           level_counts <- paste0("table1_", my_i)
-#           level_detail <- paste0("table1_1_", my_i)
-#           stat_summaries <- paste0("table2_", my_i)
-#           inspect_histogram <- paste0("plot1_",my_i)
-#           inspect_bar <- paste0("plot2_",my_i)
-#           
-#           #get selected table indice
-#           selected_row <- paste("sr", my_i, sep="")
-#           output[[selected_row]] <- renderText(
-#             as.character(
-#               distinct(file_df(),!!j)[input[[paste0("table1_",my_i,"_rows_selected")]],]
-#             )
-#             )
-#           
-#           #initialize empty space
-#           output$none <- renderPlot({})
-#           
-#           output[[level_detail]] <- DT::renderDataTable({
-#             
-#             tdata <- file_df() %>% 
-#               count(!!j)
-#             tdata <- bind_rows(
-#               c(detail = "Levels",
-#                 value = nrow(tdata)),
-#               c(detail = "Level Count Range",
-#                 value = paste0(range(tdata$n),collapse = " - ")),
-#               c(detail = "Missing/Blank Values",
-#                 value = (tdata %>% filter(is.na(!!j)))$n))
-#             
-#             datatable(tdata
-#                       ,rownames = FALSE
-#                       ,colnames = c(paste0(my_i," Detail"),
-#                                     "Value")
-#                       ,options = list(dom='t'
-#                                       ,initComplete = dt_column_head
-#                                       ,ordering=FALSE
-#                                       ,columnDefs = list(list(className = 'dt-center', targets = 1))))
-#           })
-#           
-#           output[[level_counts]] <- DT::renderDataTable({
-#             tdata <- file_df() %>% count(!!j) %>% mutate(pct = percent(n/sum(n),2)) %>% arrange(desc(n))
-#             datatable(tdata # should save this as a more global var, used several times
-#                       ,rownames = FALSE
-#                       ,colnames = c(paste0(my_i," Level"),
-#                                     "Count",
-#                                     "Percent")
-#                       ,options = list(dom='tpf'
-#                                       ,initComplete = dt_column_head
-#                                       ,search = list(regex = TRUE, caseInsensitive = FALSE)
-#                                       ,columnDefs = list(list(className = 'dt-center', targets = 1:2)))) %>%
-#               formatStyle(
-#                 my_i,'n',
-#                 background = styleColorBar(range(0,max(tdata$n)), v_light_gray2,angle=270),
-#                 backgroundSize = '100% 75%',
-#                 backgroundRepeat = 'no-repeat',
-#                 backgroundPosition = 'center',
-#                 fontWeight = 'bold')
-#           })
-#           
-#           output[[stat_summaries]] <- DT::renderDataTable({
-#             
-#             tdata <- file_df() %>%
-#               summarise(Min = min(!!j,na.rm = TRUE),
-#                         Max = max(!!j,na.rm = TRUE),
-#                         Mean = mean(!!j,na.rm = TRUE),
-#                         SD = sd(!!j,na.rm = TRUE),
-#                         Median = median(!!j,na.rm = TRUE),
-#                         Distinct = n_distinct(!!j),
-#                         Missing = sum(ifelse(is.na(!!j),1,0))) %>% 
-#               gather(stat,value) %>% 
-#               filter(!is.na(value))
-#             
-#             datatable(tdata
-#                       ,rownames = FALSE
-#                       ,colnames = c("Statistic",
-#                                     "Value")
-#                       ,options = list(
-#                         paging = FALSE
-#                         ,searching = FALSE
-#                         ,pageLength = nrow(tdata) 
-#                         ,initComplete = dt_column_head
-#                       ))
-#           })
-#           
-#           output[[inspect_histogram]] <- renderPlot({
-#             
-#             pdata <- file_df() %>%
-#               mutate(fill_val = ifelse(abs(!!j) > (mean(!!j) + (sd(!!j))),"Tail","Not"))
-#             
-#             plot_grid(ggplot(pdata,aes(x=!!j)) +
-#                         geom_histogram(bins = input[[paste0("inspect_bin",my_i)]]) +
-#                         #stat lines
-#                         geom_vline(aes(xintercept = median(!!j,na.rm = TRUE),color="median"),size = 2) +
-#                         geom_vline(aes(xintercept = mean(!!j,na.rm = TRUE),color="mean"),size = 2) +
-#                         
-#                         # cutoff lines
-#                         geom_vline(aes(xintercept=(mean(!!j) + sd(!!j)),color="cutoff"),size=1.5) +
-#                         geom_vline(aes(xintercept=(mean(!!j) - sd(!!j)),color="cutoff"),size=1.5) +
-#                         
-#                         scale_color_manual(name = "Stats", 
-#                                            values = c(median = "black", mean = "orange",cutoff = "red")) +
-#                         # to maintain alignment with boxplot
-#                         scale_x_continuous(limits = c(min(file_df()[[my_i]],na.rm = TRUE)
-#                                                       ,max(file_df()[[my_i]],na.rm = TRUE))) +
-#                         my_theme +
-#                         theme(legend.position = 'top'),
-#                       ggplot(pdata) +
-#                         geom_boxplot(aes(y=!!j,x=1),fill = "gray50") +
-#                         geom_hline(aes(yintercept = median(!!j,na.rm = TRUE),color="median"),size = 1.7) +
-#                         geom_hline(aes(yintercept = mean(!!j,na.rm = TRUE),color="mean"),size = 2) +
-#                         scale_color_manual(name = "Stats", values = c(median = "black", mean = "orange")) +
-#                         coord_flip() +
-#                         my_theme +
-#                         theme(axis.title = element_blank()),
-#                       rel_heights=c(3,1),
-#                       align = "v",
-#                       nrow = 2
-#             )
-#           })
-#           
-# 
-#         })
-#       }
-#     })
-#     
-#     
+    # observeEvent(input$add, {
+    #   var_id <- variable_count() + 1
+    #   insertUI(
+    #     selector = paste0("#var_type_col_",var_id)
+    #     , where = "afterEnd"
+    #     , ui = column(4,id = paste0("var_input_col_",var_id),switch(
+    #       input[[paste0("var_type_",var_id)]]
+    #       , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
+    #       , "Numeric" = fluidRow(
+    #         column(4,numericInput(paste0("var_input_min_",var_id), "Min:", value = 0,width='100%'))
+    #         ,column(4,numericInput(paste0("var_input_max_",var_id), "Max:", value = 10,width='100%'))
+    #         ,column(4,numericInput(paste0("var_input_mean_",var_id), "Mean:", value = 10,width='100%'))
+    #       )
+    #       
+    #       , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
+    #       , "Nominal/Categorical" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
+    #       
+    #       # should pull randomly from a full lorem ipsum implementation!
+    #       # instead just provide descriptive text that each row will containe random filler text, no need for an input here
+    #       , "Long Filler Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+    #     ))
+    #   )
+    #   
+    # })
+    
 })
