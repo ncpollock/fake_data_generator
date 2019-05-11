@@ -117,14 +117,17 @@ shinyServer(function(input, output, clientData, session) {
       }  else if (input[[paste0("var_type_",i)]] == "Date Range"){
         date_range <- input[[paste0("var_input_",i)]]
         user_df <- user_df %>% 
-          mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(date_range[1],date_range[2],1),1)))
+          mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(as.Date(date_range[1], origin = "1970-01-01")
+                                                                                     ,as.Date(date_range[2], origin = "1970-01-01"),1),1)))
       }
       
       
 
     }
     
-    user_df %>% select(-temp_var_placeholder)
+    user_df <- user_df %>% select(-temp_var_placeholder)
+    user_df <- apply(user_df,2,as.character) # to flatten out lists
+    user_df
   })
     
   # http://haozhu233.github.io/kableExtra/awesome_table_in_html.html
@@ -159,16 +162,16 @@ shinyServer(function(input, output, clientData, session) {
                , fill = TRUE)
     })
     
-    output$df_rows <- renderInfoBox({
-      
-      infoBox(
-        # nrow(init_df()),
-        sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE),
-               title = "Number of Rows",
-               icon=icon("align-justify"),
-               color="yellow",
-              fill=TRUE)
-    })
+    # output$df_rows <- renderInfoBox({
+    # 
+    #   infoBox(
+    #     # nrow(init_df()),
+    #     sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE),
+    #            title = "Number of Rows",
+    #            icon=icon("align-justify"),
+    #            color="yellow",
+    #           fill=TRUE)
+    # })
     
     output$df_size <- renderInfoBox({
 
@@ -203,7 +206,7 @@ shinyServer(function(input, output, clientData, session) {
     output$downloadData <- downloadHandler(
       filename = "NP_FDG.csv"
       , content = function(file) {
-        write.csv(init_df(), file, row.names = FALSE)
+        write.csv(user_df(), file, row.names = FALSE)
       }
     )
 # dynamic ui ########################################################
