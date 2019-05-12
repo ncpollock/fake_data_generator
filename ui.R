@@ -26,8 +26,10 @@ shinyUI(
                                                  ,width = "100%"
                                                  ,icon = icon("binoculars")))
                             # , column(4, infoBoxOutput('df_rows'))
-                            , column(1, p(icon("align-justify"),"Rows:",style = "font-size: 20px;text-align:right;padding-top:10px;")),column(2,sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE))
-                            , column(3,downloadButton("downloadData","Download",style="float:right;"))
+                            , column(1, p(icon("align-justify"),"Rows:",style = "font-size: 20px;text-align:right;padding-top:10px;"))
+                            , column(2,sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE))
+                            , column(1, icon("align-justify",class="fa-rotate-90"))
+                            , column(2,downloadButton("downloadData","Download",style="float:right;"))
                    # , column(12,id="GlobalTools",class="sticky"
                    #          # ,style="text-align: center;"
                    #          , div(style = "float:left;",actionButton("add","Add New Variable"

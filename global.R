@@ -37,6 +37,9 @@ lorem_ipsum <- readLines("lorem_ipsum.txt") %>%
   strsplit(".",fixed=TRUE) %>%
   sapply(trimws)
 
+names_df <- read.csv("names.csv"
+                     , stringsAsFactors = FALSE)
+
 # weekdays
 # weekdays(seq.Date(as.Date("2017-01-01"),as.Date("2017-01-07"),1))
 # weekdays(seq.Date(as.Date("2017-01-01"),as.Date("2017-01-07"),1),abbreviate = TRUE)

@@ -1,4 +1,8 @@
-
+/*
+body {
+  font-size: 10px;
+}
+*/
 
 h6 {
   font-size: 15px;
@@ -8,8 +12,8 @@ h6 {
 /* force static row size for variable input types */
 .variable-row{
   height: 100px;
-  border-top: 5px solid gray;
-  border-bottom: 2px solid black;
+  /* border-top: 5px solid gray; */
+  border-top: 1px solid black;
   animation: fadein 2s;
   /*background-color: black;
     -webkit-transition: background-color 2s ease-out;
@@ -42,6 +46,7 @@ h6 {
   top: 0;
   background-color: gray;
   padding: 5px;
+  padding-top: 10px;
   z-index:999;
 }
 

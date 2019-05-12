@@ -110,15 +110,18 @@ shinyServer(function(input, output, clientData, session) {
         user_df <- user_df %>% 
           mutate(!!var := sample(day_var,input$df_rows,replace = TRUE))
         
-      }  else if (input[[paste0("var_type_",i)]] == "Nominal/Categorical"){
+      } else if (input[[paste0("var_type_",i)]] == "Nominal/Categorical"){
         user_df <- user_df %>% 
           mutate(!!var := lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) ))
         
-      }  else if (input[[paste0("var_type_",i)]] == "Date Range"){
+      } else if (input[[paste0("var_type_",i)]] == "Date Range"){
         date_range <- input[[paste0("var_input_",i)]]
         user_df <- user_df %>% 
           mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(as.Date(date_range[1], origin = "1970-01-01")
                                                                                      ,as.Date(date_range[2], origin = "1970-01-01"),1),1)))
+      } else if (input[[paste0("var_type_",i)]] == "Names"){
+        user_df <- user_df %>% 
+          mutate(!!var := paste(sample(names_df$First,input$df_rows,replace=TRUE), sample(names_df$Last,input$df_rows,replace=TRUE)))
       }
       
       
@@ -126,9 +129,16 @@ shinyServer(function(input, output, clientData, session) {
     }
     
     user_df <- user_df %>% select(-temp_var_placeholder)
-    user_df <- apply(user_df,2,as.character) # to flatten out lists
+    # user_df <- apply(user_df,2,as.character) # to flatten out lists
     user_df
   })
+  
+  # there's probably a better solution than this...
+  dl_df <- reactive({
+    dl_df <- apply(user_df(),2,as.character) # to flatten out lists
+    dl_df
+  })
+  
     
   # http://haozhu233.github.io/kableExtra/awesome_table_in_html.html
     output$preview_data <- function() {
@@ -206,7 +216,7 @@ shinyServer(function(input, output, clientData, session) {
     output$downloadData <- downloadHandler(
       filename = "NP_FDG.csv"
       , content = function(file) {
-        write.csv(user_df(), file, row.names = FALSE)
+        write.csv(dl_df(), file, row.names = FALSE)
       }
     )
 # dynamic ui ########################################################
@@ -308,7 +318,7 @@ shinyServer(function(input, output, clientData, session) {
               , "Nominal/Categorical" = textInput(var_input_id,"","experimental,low dose,high dose")
               , "Phone Numbers" = h6("U.S. Phone Numbers in the format 123-123-1234.")
               , "Long Filler Text" = h6("Sentences from Lorem Ipsum.")
-              , "Names" = h6('First and Last names. For example, "John Smith" or "Jane Doe"')
+              , "Names" = h6('First and Last names. For example, "John Smith" or "Jane Doe".')
               , "Month" = fluidRow(
                 column(4,radioButtons(paste0("var_month_abb_",var_id), label = ""
                                       , choices = list("Full Names" = 0, "Abbreviations" = 1)
