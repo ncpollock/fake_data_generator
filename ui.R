@@ -19,16 +19,13 @@ shinyUI(
                                                                      ,width = "100%"
                                                                      ,style="background-color: green;"
                                                                      ,icon = icon("plus-square")))
-                            , column(1, p(icon("align-justify"),"Rows:",style = "font-size: 20px;text-align:right;padding-top:10px;"))
-                            , column(2,sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE))
-                            , column(2, p(icon("align-justify",class="fa-rotate-90")
-                                         ,"Variables: "
-                                         ,textOutput("df_variables",inline = TRUE)
-                                         ,style = "font-size: 20px;text-align:right;padding-top:10px;"))
-                            , column(2,actionButton("preview","Preview Data"
+                            , column(3,actionButton("preview","Preview Data"
                                                     ,width = "100%"
                                                     ,icon = icon("binoculars"))
-                                     ,style="float:right;")
+                                     # ,style="float:right;"
+                            )
+                            , column(1, p(icon("align-justify"),"Rows:",style = "font-size: 20px;text-align:right;padding-top:10px;"))
+                            , column(3,sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE))
                             , column(2,downloadButton("downloadData","Download",style="float:right;background-color: blue;"))
                  )
                  , fluidRow(

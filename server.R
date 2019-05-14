@@ -169,7 +169,7 @@ shinyServer(function(input, output, clientData, session) {
           summarise(input_name = n_distinct(input_name)))$input_name
 
       infoBox(variables,
-               title = "Number of Variables"
+               title = "Variables"
                , icon=icon("columns")
                , color="black"
                , fill = TRUE)
@@ -194,7 +194,7 @@ shinyServer(function(input, output, clientData, session) {
     
     output$df_size <- renderInfoBox({
 
-      infoBox(format(object.size(init_df()),units="Mb"),
+      infoBox(format(object.size(user_df()),units="auto"),
                title="Dataset Size",
                icon=icon("expand-arrows-alt"),
                color="blue", fill=TRUE)
