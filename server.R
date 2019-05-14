@@ -153,6 +153,9 @@ shinyServer(function(input, output, clientData, session) {
     observeEvent(input$preview,{
       showModal(modalDialog(easyClose = TRUE,size = "l"
         , title = tags$b("Data Preview")
+        , infoBoxOutput('df_columns',width=6)
+        # , infoBoxOutput('df_rows')
+        , infoBoxOutput('df_size',width = 6)
         , tableOutput('preview_data')
         , class = "on_top"
       ))
@@ -170,6 +173,12 @@ shinyServer(function(input, output, clientData, session) {
                , icon=icon("columns")
                , color="black"
                , fill = TRUE)
+    })
+    
+    output$df_variables <- renderText({ # number of variables / columns
+        (All_Inputs() %>%
+          filter(grepl("var_name_",input_name,fixed = TRUE)) %>%
+          summarise(input_name = n_distinct(input_name)))$input_name
     })
     
     # output$df_rows <- renderInfoBox({
