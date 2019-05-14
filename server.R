@@ -143,12 +143,19 @@ shinyServer(function(input, output, clientData, session) {
   # http://haozhu233.github.io/kableExtra/awesome_table_in_html.html
     output$preview_data <- function() {
       user_df() %>%
-        slice(1:50) %>%
+        slice(1:100) %>%
         knitr::kable("html") %>%
         row_spec(0, bold = T, color = "white", background = "black") %>%
         kable_styling(bootstrap_options = c("striped", "hover")) %>%
+        scroll_box(width = "100%",height = "700px"
+                   # ,extra_css = "transform:rotateX(180deg);-ms-transform:rotateX(180deg);-webkit-transform:rotateX(180deg);"
+                   ) %>%
         footnote("Only the first 100 rows are shown in the preview.")
     }
+    
+    # output$preview_data_dt <- DT::renderDataTable({
+    #   datatable(user_df())
+    # })
     
     observeEvent(input$preview,{
       showModal(modalDialog(easyClose = TRUE,size = "l"
@@ -156,7 +163,9 @@ shinyServer(function(input, output, clientData, session) {
         , infoBoxOutput('df_columns',width=6)
         # , infoBoxOutput('df_rows')
         , infoBoxOutput('df_size',width = 6)
+        , p("Note: Only the first 100 rows are shown in the preview.")
         , tableOutput('preview_data')
+        # , DT::dataTableOutput('preview_data_dt')
         , class = "on_top"
       ))
     })
