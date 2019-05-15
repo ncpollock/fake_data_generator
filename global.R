@@ -92,6 +92,16 @@ init_var <- function(x,var_id){
   )
 }
 
+my_navbar_info <- gsub("[\r\n]", "",
+                    div(
+                      icon("user fa-pull-right fa-3x")
+                      , strong("Developed by: "),
+                    br(),
+                    a(href="https://ncpollock.github.io/"
+                      ,target="_blank"
+                      ,"Noah C. Pollock")
+                    ,style = "float:right;padding-top:5px;white-space:nowrap;"))
+
 
 # set general theme for ggplots
 # my_theme <- theme(panel.background = element_blank(),
