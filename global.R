@@ -53,12 +53,12 @@ weekday_abb <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 #   "}")
 
 # allow box collapse on title click
-# title_collapse <- function(x){
-#   HTML(
-#     paste0('<strong class="box-title" data-widget="collapse" style="cursor: pointer;">'
-#            ,x
-#            ,'</strong>'))
-# }
+title_collapse <- function(x){
+  HTML(
+    paste0('<strong class="box-title" data-widget="collapse" style="cursor: pointer;">'
+           ,x
+           ,'</strong>'))
+}
 
 # var_type_selections <- c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")
 
@@ -91,6 +91,8 @@ init_var <- function(x,var_id){
          )
   )
 }
+
+var_id <- 1
 
 my_navbar_info <- gsub("[\r\n]", "",
                     div(

@@ -270,12 +270,6 @@ shinyServer(function(input, output, clientData, session) {
     # use the add button counter to count the number of variables on the page
     variable_count <- reactive({
       input$add + ncol(init_df()) # give the new variable the next available id number
-      # inputs <- names(reactiveValuesToList(input))
-      # # inputs <- 4
-      # max(as.numeric(
-      #   gsub(
-      #     "\\D", "",inputs))
-      #   , na.rm = TRUE) 
     })
     
     # add a new variable row when add button clicked
@@ -289,7 +283,7 @@ shinyServer(function(input, output, clientData, session) {
         , ui = init_var(x = paste0("variable_",new_id), var_id = new_id)
       )
     })
-
+    
     # separate observer for adding new variables or removing existing variables
     observe({
       # isolate({
@@ -361,8 +355,22 @@ shinyServer(function(input, output, clientData, session) {
         })
         
       }) # lapply
-      # }) # isolate
     }) #observe
+    
+    
+    # Associations.tab
+    
+    # add a new association row when add button clicked
+    # use add button increment value!
+    observeEvent(input$add_ML, {
+      
+      insertUI(
+        selector = "#var_header_ML"
+        , where = "afterEnd"
+        , ui = init_var(x = paste0("association_",input$add_ML), var_id = input$add_ML)
+      )
+    })
+    
     
 # SANDBOX ###########################################################
 #     

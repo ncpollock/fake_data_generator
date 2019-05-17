@@ -30,11 +30,55 @@ shinyUI(
                  , fluidRow(
                    br()
                    , column(12,id = "var_header",column(3,"Variable Name"),column(4,"Type"),column(4,"Options / Details"))
-                   , box("Variable Associations")
+                   )
+                 # , box("test"
+                 #     # , title_collapse("Variable Associations")
+                 #         , width = 12, background = "black",solidHeader = TRUE,collapsible = TRUE
+                 #         , p("some content!")
+                 #         , h3("Some more content!"))
                    , tableOutput("show_inputs")
-                 )),
+                 )
                
-               tabPanel('About/Help', icon = icon("question-circle"),tags$style("float: right;")
+               , tabPanel("Variable Associations", icon = icon("chain")
+                          , fluidRow(id="GlobalTools_ML",class="sticky"
+                                     , column(6,actionButton("add_ML","Add New Association"
+                                                             ,width = "100%"
+                                                             ,style="background-color: green;"
+                                                             ,icon = icon("plus-square")))
+                                     , column(6,actionButton("preview_ML","Visualize Associations"
+                                                             ,width = "100%"
+                                                             ,icon = icon("bar-chart"))
+                                     )
+                                     # , column(2,downloadButton("downloadData","Download",style="float:right;background-color: blue;"))
+                          )
+                          , fluidRow(
+                            br()
+                            , column(12,id = "var_header_ML",column(3,"Predictor(s)"),column(4,"Outcome"),column(4,"Options / Details"))
+                          )
+                          # use selectize input
+                          # first variable with have greatest predictive power?
+                            # or can selectize be ordered?
+                          , p("dynamic UI based on variables created.")
+                          # , column(12,id = paste0("div_ML_",var_id)
+                          #        , fluidRow(class = "variable-row"
+                          #                   , column(4
+                          #                            , style = "margin-top: 25px; border-right: 1px dashed black;"
+                          #                            , selectInput(paste0("predictor_",var_id), 'Options', state.name, multiple=TRUE, selectize=TRUE))
+                          #                   , column(4,id = paste0("outcome_",var_id)
+                          #                            , style = "margin-top: 25px; border-right: 1px dashed black;"
+                          #                            , selectInput(paste0("outcome_",var_id), 'Options', state.name, multiple=TRUE, selectize=TRUE)
+                          #                            )
+                          #                   , column(3,id = paste0("ML_input_col_",var_id),p(""))
+                          #                   , column(1
+                          #                            , style = "margin-top: 25px;"
+                          #                            , actionButton(paste0("ML_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")
+                          #                            # , dynamic help buttons/tooltips based on variable type selection!
+                          #                   )
+                          #        )
+                          # )
+                )
+               
+               , tabPanel('About/Help', icon = icon("question-circle")
                         ,p("Some inspirations:"
                            ,br(),"https://mockaroo.com/"
                            ,br(),"https://ebsubudhi.shinyapps.io/DataGeneration/"
@@ -54,11 +98,4 @@ shinyUI(
                  HTML(
                    paste0("var header = $('.navbar> .container-fluid');header.append('"
                           , my_navbar_info,"');console.log(header)")))
-               # , tabPanel(p(strong("Developed by: "),
-               #              br(),
-               #              a(href="https://ncpollock.github.io/"
-               #                ,target="_blank"
-               #                ,"Noah C. Pollock"))
-               #            , style = "float:right;"
-               #            )
                )))
