@@ -1,13 +1,13 @@
 
 #TO DO:
   # prevent user from deleting the last variable?
-  # put dataset size on the preview page so it doesn't re-run with every change!
+  # collecting inputs doesn't work when inputs exist across pages
+    #probably because of nulls / page rendering?
+  # should keep all inputs on main page
+  # can I swap sticky elements halfway down the page?
 
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
-
-# phone number generator
-# paste(sample(100:999,1),sample(100:999,1),sample(1000:9990,1),sep="-")
 
 # Define server logic required to draw a datatable
 shinyServer(function(input, output, clientData, session) {
@@ -290,7 +290,7 @@ shinyServer(function(input, output, clientData, session) {
       lapply(1:(variable_count()+1),function(var_id){ 
     
         var_input_id <- paste0("var_input_",var_id)
-        # do I need to isolate these?
+
         # when a row trash icon / remove button is clicked
         observeEvent(input[[paste0("var_delete_",var_id)]], {
           removeUI(
@@ -304,8 +304,6 @@ shinyServer(function(input, output, clientData, session) {
           
         })
         
-        # do I need isolate() here?
-        # or maybe a local reactive?
         # when the variable type is changed
         observeEvent(input[[paste0("var_type_",var_id)]], {
           removeUI(
@@ -364,14 +362,34 @@ shinyServer(function(input, output, clientData, session) {
     # use add button increment value!
     observeEvent(input$add_ML, {
       
+      removeUI(
+        selector = "#no_assoc"
+      )
+      
       insertUI(
         selector = "#var_header_ML"
         , where = "afterEnd"
-        , ui = init_var(x = paste0("association_",input$add_ML), var_id = input$add_ML)
+        , ui = init_ML(ML_id = input$add_ML)
       )
     })
     
-    
+    observe({
+      lapply(1:input$add_ML,function(ML_id){ 
+        
+        observeEvent(input[[paste0("var_delete_",var_id)]], {
+          removeUI(
+            selector = paste0("#div_ML_",ML_id)
+          )
+          # nullify inputs that are removed from ui
+          # need to add each input id name to remove...
+          # lapply would work here...
+          session$sendInputMessage(paste0("ML_predictor_",ML_id), list(value = NULL))
+          session$sendInputMessage(paste0("ML_outcome_",ML_id), list(value = NULL))
+          
+        })
+        
+      }) # lapply
+    }) # observe
 # SANDBOX ###########################################################
 #     
     

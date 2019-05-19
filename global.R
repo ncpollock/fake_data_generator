@@ -71,6 +71,7 @@ var_type_selections <- list(
   , 'Other' = list("Sequential Primary Key","Names","Phone Numbers","States")
 )
 
+var_id <- 1
 init_var <- function(x,var_id){
   column(12,id = paste0("div_var_",var_id)
          , fluidRow(class = "variable-row"
@@ -92,7 +93,26 @@ init_var <- function(x,var_id){
   )
 }
 
-var_id <- 1
+init_ML <- function(ML_id){
+  column(12,id = paste0("div_ML_",ML_id)
+         , fluidRow(class = "variable-row"
+                    , column(3
+                             , style = "margin-top: 25px; border-right: 1px dashed black;"
+                             , selectInput(paste0("ML_predictor_",ML_id), 'Options', state.name, multiple=TRUE))
+                    , column(4,id = paste0("outcome_",ML_id)
+                             , style = "margin-top: 25px; border-right: 1px dashed black;"
+                             , selectInput(paste0("ML_outcome_",ML_id), NULL
+                                           # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+                                           , state.name))
+                    , column(4,id = paste0("ML_input_col_",ML_id),p(""))
+                    , column(1
+                             , style = "margin-top: 25px;"
+                             , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
+                             # , dynamic help buttons/tooltips based on variable type selection!
+                    )
+         )
+  )
+}
 
 my_navbar_info <- gsub("[\r\n]", "",
                     div(

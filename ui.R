@@ -58,7 +58,7 @@ shinyUI(
                           # use selectize input
                           # first variable with have greatest predictive power?
                             # or can selectize be ordered?
-                          , p("dynamic UI based on variables created.")
+                          , h2(id = "no_assoc","There are no Variable Associations defined yet.")
                           # , column(12,id = paste0("div_ML_",var_id)
                           #        , fluidRow(class = "variable-row"
                           #                   , column(4
