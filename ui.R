@@ -14,6 +14,7 @@ shinyUI(
                  , fluidRow(
                    useShinydashboard()
                  )
+                 , h1("1. Add and Define Variables")
                  , fluidRow(id="GlobalTools",class="sticky"
                             , column(3,actionButton("add","Add New Variable"
                                                                      ,width = "100%"
@@ -31,52 +32,50 @@ shinyUI(
                    br()
                    , column(12,id = "var_header",column(3,"Variable Name"),column(4,"Type"),column(4,"Options / Details"))
                    )
-                 # , box("test"
-                 #     # , title_collapse("Variable Associations")
-                 #         , width = 12, background = "black",solidHeader = TRUE,collapsible = TRUE
-                 #         , p("some content!")
-                 #         , h3("Some more content!"))
-                   , tableOutput("show_inputs")
+                 , h1("2 (Optional). Add and Define Relationships Between Variables")
+                 , fluidRow(id="GlobalTools_ML",class="sticky"
+                            , column(6,actionButton("add_ML","Add New Association"
+                                                    ,width = "100%"
+                                                    ,style="background-color: green;"
+                                                    ,icon = icon("plus-square")))
+                            , column(6,actionButton("preview_ML","Visualize Associations"
+                                                    ,width = "100%"
+                                                    ,icon = icon("bar-chart"))
+                            )
+                            # , column(2,downloadButton("downloadData","Download",style="float:right;background-color: blue;"))
+                 )
+                 , fluidRow(
+                   br()
+                   , column(12,id = "var_header_ML",column(3,"Predictor(s)"),column(4,"Outcome"),column(4,"Options / Details"))
+                 )
+                 # use selectize input
+                 # first variable with have greatest predictive power?
+                 # or can selectize be ordered?
+                 , h2(id = "no_assoc","There are no Variable Associations defined yet.")
+                 , tableOutput("show_inputs")
                  )
                
-               , tabPanel("Variable Associations", icon = icon("chain")
-                          , fluidRow(id="GlobalTools_ML",class="sticky"
-                                     , column(6,actionButton("add_ML","Add New Association"
-                                                             ,width = "100%"
-                                                             ,style="background-color: green;"
-                                                             ,icon = icon("plus-square")))
-                                     , column(6,actionButton("preview_ML","Visualize Associations"
-                                                             ,width = "100%"
-                                                             ,icon = icon("bar-chart"))
-                                     )
-                                     # , column(2,downloadButton("downloadData","Download",style="float:right;background-color: blue;"))
-                          )
-                          , fluidRow(
-                            br()
-                            , column(12,id = "var_header_ML",column(3,"Predictor(s)"),column(4,"Outcome"),column(4,"Options / Details"))
-                          )
-                          # use selectize input
-                          # first variable with have greatest predictive power?
-                            # or can selectize be ordered?
-                          , h2(id = "no_assoc","There are no Variable Associations defined yet.")
-                          # , column(12,id = paste0("div_ML_",var_id)
-                          #        , fluidRow(class = "variable-row"
-                          #                   , column(4
-                          #                            , style = "margin-top: 25px; border-right: 1px dashed black;"
-                          #                            , selectInput(paste0("predictor_",var_id), 'Options', state.name, multiple=TRUE, selectize=TRUE))
-                          #                   , column(4,id = paste0("outcome_",var_id)
-                          #                            , style = "margin-top: 25px; border-right: 1px dashed black;"
-                          #                            , selectInput(paste0("outcome_",var_id), 'Options', state.name, multiple=TRUE, selectize=TRUE)
-                          #                            )
-                          #                   , column(3,id = paste0("ML_input_col_",var_id),p(""))
-                          #                   , column(1
-                          #                            , style = "margin-top: 25px;"
-                          #                            , actionButton(paste0("ML_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")
-                          #                            # , dynamic help buttons/tooltips based on variable type selection!
-                          #                   )
-                          #        )
-                          # )
-                )
+               # , tabPanel("Variable Associations", icon = icon("chain")
+               #            , fluidRow(id="GlobalTools_ML",class="sticky"
+               #                       , column(6,actionButton("add_ML","Add New Association"
+               #                                               ,width = "100%"
+               #                                               ,style="background-color: green;"
+               #                                               ,icon = icon("plus-square")))
+               #                       , column(6,actionButton("preview_ML","Visualize Associations"
+               #                                               ,width = "100%"
+               #                                               ,icon = icon("bar-chart"))
+               #                       )
+               #                       # , column(2,downloadButton("downloadData","Download",style="float:right;background-color: blue;"))
+               #            )
+               #            , fluidRow(
+               #              br()
+               #              , column(12,id = "var_header_ML",column(3,"Predictor(s)"),column(4,"Outcome"),column(4,"Options / Details"))
+               #            )
+               #            # use selectize input
+               #            # first variable with have greatest predictive power?
+               #              # or can selectize be ordered?
+               #            , h2(id = "no_assoc","There are no Variable Associations defined yet.")
+               #  )
                
                , tabPanel('About/Help', icon = icon("question-circle")
                         ,p("Some inspirations:"

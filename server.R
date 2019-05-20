@@ -1,10 +1,12 @@
 
 #TO DO:
+  # fix date values
   # prevent user from deleting the last variable?
   # collecting inputs doesn't work when inputs exist across pages
     #probably because of nulls / page rendering?
-  # should keep all inputs on main page
-  # can I swap sticky elements halfway down the page?
+    # should keep all inputs on main page?
+    # works across multiple pages now...
+  # can I swap sticky elements halfway down the page? yes, see stickier
 
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
@@ -212,7 +214,9 @@ shinyServer(function(input, output, clientData, session) {
     All_Inputs <- reactive({
       myvalues <- NULL
       for(i in 1:length(names(input))){
+        if(ncol(cbind(names(input)[i],input[[names(input)[i]]])) == 2){ # only if input value is not null
         myvalues <- as.data.frame(rbind(myvalues,(cbind(names(input)[i],input[[names(input)[i]]]))))
+        }
       }
       names(myvalues) <- c("input_name","input_value")
       myvalues %>%
@@ -220,8 +224,6 @@ shinyServer(function(input, output, clientData, session) {
                , input_value != "") %>%
         mutate(input_number = as.integer(gsub("\\D", "",input_name))
                , input_type = gsub("_[1-9]","",input_name))
-      # collect numbers from var_name_
-      # filter all inputs to include only those with the ids that exist from var_name_
     })
     
     output$show_inputs <- renderTable({
@@ -284,9 +286,9 @@ shinyServer(function(input, output, clientData, session) {
       )
     })
     
-    # separate observer for adding new variables or removing existing variables
+   
     observe({
-      # isolate({
+    
       lapply(1:(variable_count()+1),function(var_id){ 
     
         var_input_id <- paste0("var_input_",var_id)
@@ -350,13 +352,31 @@ shinyServer(function(input, output, clientData, session) {
             ))
           )
         
-        })
+        }) # observeEvent when variable type is changed
+        
+        # update ML options when variable names are updated
+        observeEvent(
+          {input[[paste0("var_name_",var_id)]]
+            input$add_ML}
+          , {
+         
+            variables <- (
+              All_Inputs() %>%
+                filter(input_type == "var_name")
+            )$input_value
+          
+          for(i in 1:input$add_ML){
+          updateSelectInput(session, paste0("ML_predictor_",i),NULL,variables
+                            ,selected = variables[1])
+          }
+          
+        }) # observeEvent when variable names change
         
       }) # lapply
     }) #observe
     
     
-    # Associations.tab
+    # Associations.tab ###########################################################
     
     # add a new association row when add button clicked
     # use add button increment value!
@@ -371,6 +391,8 @@ shinyServer(function(input, output, clientData, session) {
         , where = "afterEnd"
         , ui = init_ML(ML_id = input$add_ML)
       )
+      
+      #update
     })
     
     observe({
@@ -390,6 +412,23 @@ shinyServer(function(input, output, clientData, session) {
         
       }) # lapply
     }) # observe
+    
+    # # update inputs to include all defined variables
+    # observe({ # init the page with a few types selected
+    #   
+    #   variables <- as.character(
+    #     All_Inputs() %>%
+    #       filter(grepl("var_name_",input_name,fixed = TRUE))
+    #   )
+    #   
+    #   for(i in 1:length(variables)){
+    #   if(!is.null(input[[paste0("var_name_",i)]])){
+    # 
+    #   }
+    #   }
+    # })
+    
+    
 # SANDBOX ###########################################################
 #     
     
