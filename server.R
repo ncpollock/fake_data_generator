@@ -1,12 +1,7 @@
 
 #TO DO:
-  # fix date values
+  # fix date values!!!!!
   # prevent user from deleting the last variable?
-  # collecting inputs doesn't work when inputs exist across pages
-    #probably because of nulls / page rendering?
-    # should keep all inputs on main page?
-    # works across multiple pages now...
-  # can I swap sticky elements halfway down the page? yes, see stickier
 
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
@@ -40,6 +35,7 @@ shinyServer(function(input, output, clientData, session) {
     variables <- All_Inputs() %>%
       filter(grepl("var_name_",input_name,fixed = TRUE))
     
+    # wide format instead?
     # duplicate identifiers # need dummy method
     # test_wide <- All_Inputs() %>%
     #   select(-input_name) %>%
@@ -117,7 +113,7 @@ shinyServer(function(input, output, clientData, session) {
           mutate(!!var := lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) ))
         
       } else if (input[[paste0("var_type_",i)]] == "Date Range"){
-        date_range <- input[[paste0("var_input_",i)]]
+        date_range <- as.Date(as.integer(input[[paste0("var_input_",i)]]), origin = "1970-01-01")
         user_df <- user_df %>% 
           mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(as.Date(date_range[1], origin = "1970-01-01")
                                                                                      ,as.Date(date_range[2], origin = "1970-01-01"),1),1)))
@@ -127,8 +123,13 @@ shinyServer(function(input, output, clientData, session) {
       }
       
       
-
-    }
+    } # loop through variables
+    
+    # now loop through ML?
+    # hard code a practice first
+    # then plot the hard code.
+    # 64000 + 750*air_df$career_use + rnorm(n_students*n_terms,0,1000)
+    # Mean + sd*value + error
     
     user_df <- user_df %>% select(-temp_var_placeholder)
     # user_df <- apply(user_df,2,as.character) # to flatten out lists
@@ -325,9 +326,8 @@ shinyServer(function(input, output, clientData, session) {
                                    ,column(3,numericInput(paste0("var_sd_",var_id), "SD:", value = 1,width='100%'))
                               )
 
-              # I think I should make the ps h6 instead and define custom style for them! eg padding, light gray, etc
-              , "Date Range" = dateRangeInput(var_input_id, "")
-              , "Nominal/Categorical" = textInput(var_input_id,"","experimental,low dose,high dose")
+              , "Date Range" = dateRangeInput(var_input_id, "",end = Sys.Date() + 30)
+              , "Nominal/Categorical" = textInput(var_input_id,"","control,low dose,high dose")
               , "Phone Numbers" = h6("U.S. Phone Numbers in the format 123-123-1234.")
               , "Long Filler Text" = h6("Sentences from Lorem Ipsum.")
               , "Names" = h6('First and Last names. For example, "John Smith" or "Jane Doe".')
@@ -359,17 +359,17 @@ shinyServer(function(input, output, clientData, session) {
           {input[[paste0("var_name_",var_id)]]
             input$add_ML}
           , {
-         
+
             variables <- (
               All_Inputs() %>%
                 filter(input_type == "var_name")
             )$input_value
-          
-          for(i in 1:input$add_ML){
+
+          for(i in 0:input$add_ML){
           updateSelectInput(session, paste0("ML_predictor_",i),NULL,variables
                             ,selected = variables[1])
           }
-          
+
         }) # observeEvent when variable names change
         
       }) # lapply
@@ -386,11 +386,61 @@ shinyServer(function(input, output, clientData, session) {
         selector = "#no_assoc"
       )
       
+      variables <- (
+        All_Inputs() %>%
+          filter(input_type == "var_name")
+      )$input_value
+      
+      ML_id <- input$add_ML
+      
       insertUI(
         selector = "#var_header_ML"
         , where = "afterEnd"
-        , ui = init_ML(ML_id = input$add_ML)
-      )
+        , ui = column(12,id = paste0("div_ML_",ML_id)
+                 , fluidRow(class = "variable-row"
+                            , column(3
+                                     , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                     , selectInput(paste0("ML_predictor_",ML_id),NULL
+                                                   , variables
+                                                   , multiple=TRUE))
+                            , column(4,id = paste0("outcome_",ML_id)
+                                     , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                     , selectInput(paste0("ML_outcome_",ML_id), NULL
+                                                   # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+                                                   , variables))
+                            , column(4,id = paste0("ML_input_col_",ML_id),p(""))
+                            , column(1
+                                     , style = "margin-top: 25px;"
+                                     , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
+                                     # , dynamic help buttons/tooltips based on variable type selection!
+                            )
+                 )
+          )
+        # , ui = selectInput(paste0("ML_predictor_",1),'', variables, multiple=TRUE)
+        # , ui = init_ML(ML_id = input$add_ML)
+        # , ui = function(ML_id = input$add_ML){
+        #   column(12,id = paste0("div_ML_",ML_id)
+        #          , fluidRow(class = "variable-row"
+        #                     , column(3
+        #                              , style = "margin-top: 25px; border-right: 1px dashed black;"
+        #                              , selectInput(paste0("ML_predictor_",ML_id),''
+        #                                            , variables
+        #                                            , multiple=TRUE))
+        #                     , column(4,id = paste0("outcome_",ML_id)
+        #                              , style = "margin-top: 25px; border-right: 1px dashed black;"
+        #                              , selectInput(paste0("ML_outcome_",ML_id), NULL
+        #                                            # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+        #                                            , state.name))
+        #                     , column(4,id = paste0("ML_input_col_",ML_id),p(""))
+        #                     , column(1
+        #                              , style = "margin-top: 25px;"
+        #                              , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
+        #                              # , dynamic help buttons/tooltips based on variable type selection!
+        #                     )
+        #          )
+        #   )
+        # }
+      ) # insertUI
       
       #update
     })
@@ -398,7 +448,7 @@ shinyServer(function(input, output, clientData, session) {
     observe({
       lapply(1:input$add_ML,function(ML_id){ 
         
-        observeEvent(input[[paste0("var_delete_",var_id)]], {
+        observeEvent(input[[paste0("ML_delete_",ML_id)]], {
           removeUI(
             selector = paste0("#div_ML_",ML_id)
           )
