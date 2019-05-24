@@ -98,7 +98,9 @@ init_ML <- function(ML_id){
          , fluidRow(class = "variable-row"
                     , column(3
                              , style = "margin-top: 25px; border-right: 1px dashed black;"
-                             , selectInput(paste0("ML_predictor_",ML_id), 'Options', state.name, multiple=TRUE))
+                             , selectInput(paste0("ML_predictor_",ML_id),''
+                                           , state.name
+                                           , multiple=TRUE))
                     , column(4,id = paste0("outcome_",ML_id)
                              , style = "margin-top: 25px; border-right: 1px dashed black;"
                              , selectInput(paste0("ML_outcome_",ML_id), NULL

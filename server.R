@@ -110,7 +110,7 @@ shinyServer(function(input, output, clientData, session) {
         
       } else if (input[[paste0("var_type_",i)]] == "Nominal/Categorical"){
         user_df <- user_df %>% 
-          mutate(!!var := lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) ))
+          mutate(!!var := unlist(lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) )))
         
       } else if (input[[paste0("var_type_",i)]] == "Date Range"){
         date_range <- as.Date(as.integer(input[[paste0("var_input_",i)]]), origin = "1970-01-01")
@@ -128,11 +128,24 @@ shinyServer(function(input, output, clientData, session) {
     # now loop through ML?
     # hard code a practice first
     # then plot the hard code.
-    # 64000 + 750*air_df$career_use + rnorm(n_students*n_terms,0,1000)
-    # Mean + sd*value + error
+    # user_df <- user_df %>%
+    #   # mutate(foo = "bar")
+    #   mutate(test = as.numeric(as.factor(condition))) %>%
+    #   mutate(test_hat = 1)
+    
+    user_df <- user_df %>%
+      mutate(condition = as.factor(condition)) %>%
+      arrange(condition)
+    
+    user_df$weight = sort(user_df$weight)
+    
+    
+    
+    # 150 + -.05*user_df$weight + rnorm(nrow(user_df),150,5)
+    # do.call(rbind,lapply(test_df$a,function(x) test_df %>% filter(a == x) %>% mutate(c = 3)))
+    # Mean + strength*value + error
     
     user_df <- user_df %>% select(-temp_var_placeholder)
-    # user_df <- apply(user_df,2,as.character) # to flatten out lists
     user_df
   })
   
@@ -140,6 +153,10 @@ shinyServer(function(input, output, clientData, session) {
   dl_df <- reactive({
     dl_df <- apply(user_df(),2,as.character) # to flatten out lists
     dl_df
+  })
+  
+  output$test_plot <- renderPlot({
+    plot(user_df()$condition,user_df()$weight)
   })
   
     
@@ -167,6 +184,7 @@ shinyServer(function(input, output, clientData, session) {
         # , infoBoxOutput('df_rows')
         , infoBoxOutput('df_size',width = 6)
         , p("Note: Only the first 100 rows are shown in the preview.")
+        , plotOutput("test_plot")
         , tableOutput('preview_data')
         # , DT::dataTableOutput('preview_data_dt')
         , class = "on_top"
