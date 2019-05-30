@@ -66,7 +66,6 @@ shinyServer(function(input, output, clientData, session) {
 
       } else if (input[[paste0("var_type_",i)]] == "Numeric"){
         user_df <- user_df %>% 
-          # mutate(!!var := var_max)
           mutate(!!var := qnorm(
             runif(input$df_rows
                   , pnorm(var_min, mean=var_mean, sd=var_sd)
@@ -113,10 +112,15 @@ shinyServer(function(input, output, clientData, session) {
           mutate(!!var := unlist(lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) )))
         
       } else if (input[[paste0("var_type_",i)]] == "Date Range"){
-        date_range <- as.Date(as.integer(input[[paste0("var_input_",i)]]), origin = "1970-01-01")
+        date_range <- input[[paste0("var_input_",i)]]
+                                         
+        # as.Date(as.integer(), origin = "1970-01-01")
+        
         user_df <- user_df %>% 
-          mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(as.Date(date_range[1], origin = "1970-01-01")
-                                                                                     ,as.Date(date_range[2], origin = "1970-01-01"),1),1)))
+          mutate(!!var := as.Date(unlist(lapply(1:input$df_rows,function(x) sample(seq.Date(date_range[1]
+                                                                             , date_range[2],1),1))), origin = "1970-01-01"))
+          # mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(as.Date(date_range[1], origin = "1970-01-01")
+          #                                                                            ,as.Date(date_range[2], origin = "1970-01-01"),1),1)))
       } else if (input[[paste0("var_type_",i)]] == "Names"){
         user_df <- user_df %>% 
           mutate(!!var := paste(sample(names_df$First,input$df_rows,replace=TRUE), sample(names_df$Last,input$df_rows,replace=TRUE)))
@@ -125,25 +129,39 @@ shinyServer(function(input, output, clientData, session) {
       
     } # loop through variables
     
-    # now loop through ML?
-    # hard code a practice first
-    # then plot the hard code.
+    # test forced association methods
+    # 1 sort values to give high level factors high values and low levels low values
     # user_df <- user_df %>%
-    #   # mutate(foo = "bar")
-    #   mutate(test = as.numeric(as.factor(condition))) %>%
-    #   mutate(test_hat = 1)
+    #   mutate(condition = as.factor(condition)) %>%
+    #   arrange(condition)
+    # 
+    # user_df$weight = sort(user_df$weight)
     
+    # 2 use predictions from statistical models, then add error
     user_df <- user_df %>%
-      mutate(condition = as.factor(condition)) %>%
-      arrange(condition)
+      mutate(condition = as.factor(condition))
+    model <- lm(weight ~ condition,user_df) # linear model
+    user_df$weight <- predict(model,newdata = user_df) # make predictions
     
-    user_df$weight = sort(user_df$weight)
+    # 3 for one-to-one assocations
+      # , each level (L) in predictor generates a random normal distribution (D)
+      # based on the strength (S) of the association specified
+      # and the 
+      # Strength determines distribution width eg strong = 4, weak = 1 SD slices
+      # centered around D = rnrom(n,mean = )
+      # eg level 1 receives mean assocated with -3 SD of original distribution
+        #, level 6 receives mean associated with +3 SD.
+        # this would help keep a similar distribution to the one defined by user
     
     
     
     # 150 + -.05*user_df$weight + rnorm(nrow(user_df),150,5)
     # do.call(rbind,lapply(test_df$a,function(x) test_df %>% filter(a == x) %>% mutate(c = 3)))
     # Mean + strength*value + error
+    
+    if(!is.null(input$ML_predictor_1)){
+      eval(parse(text = paste("user_df[[input$ML_outcome_1]] <- 2*as.numeric(as.factor(user_df[[input$ML_predictor_1]]))","rnorm(nrow(user_df),10,2)",sep="+")))
+    }
     
     user_df <- user_df %>% select(-temp_var_placeholder)
     user_df
