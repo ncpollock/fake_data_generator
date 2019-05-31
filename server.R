@@ -113,14 +113,9 @@ shinyServer(function(input, output, clientData, session) {
         
       } else if (input[[paste0("var_type_",i)]] == "Date Range"){
         date_range <- input[[paste0("var_input_",i)]]
-                                         
-        # as.Date(as.integer(), origin = "1970-01-01")
-        
         user_df <- user_df %>% 
           mutate(!!var := as.Date(unlist(lapply(1:input$df_rows,function(x) sample(seq.Date(date_range[1]
                                                                              , date_range[2],1),1))), origin = "1970-01-01"))
-          # mutate(!!var := lapply(1:input$df_rows,function(x) sample(seq.Date(as.Date(date_range[1], origin = "1970-01-01")
-          #                                                                            ,as.Date(date_range[2], origin = "1970-01-01"),1),1)))
       } else if (input[[paste0("var_type_",i)]] == "Names"){
         user_df <- user_df %>% 
           mutate(!!var := paste(sample(names_df$First,input$df_rows,replace=TRUE), sample(names_df$Last,input$df_rows,replace=TRUE)))
@@ -138,10 +133,11 @@ shinyServer(function(input, output, clientData, session) {
     # user_df$weight = sort(user_df$weight)
     
     # 2 use predictions from statistical models, then add error
-    user_df <- user_df %>%
-      mutate(condition = as.factor(condition))
-    model <- lm(weight ~ condition,user_df) # linear model
-    user_df$weight <- predict(model,newdata = user_df) # make predictions
+    # user_df <- user_df %>%
+    #   mutate(condition = as.factor(condition))
+
+    # model <- lm(weight ~ condition,user_df) # linear model
+    # user_df$weight <- predict(model,newdata = user_df) # make predictions
     
     # 3 for one-to-one assocations
       # , each level (L) in predictor generates a random normal distribution (D)
@@ -159,8 +155,23 @@ shinyServer(function(input, output, clientData, session) {
     # do.call(rbind,lapply(test_df$a,function(x) test_df %>% filter(a == x) %>% mutate(c = 3)))
     # Mean + strength*value + error
     
+    out_value <- user_df[[input$ML_outcome_1]]
+    assoc_strength <- max(out_value)/10 # 1:10?
+    variability <- sd(out_value)
+    # adjusted_value <- sample(min(out_value):max(out_value),1)
+    adjusted_error <- data.frame(error = rnorm(nrow(user_df),0,variability)) 
+    n_violations <- nrow(adjusted_error %>% filter(error < min(out_value) | error > max(out_value)))
+    adjusted_error <- adjusted_error %>%
+      mutate(error = ifelse(error < min(out_value)
+                            | error > max(out_value)
+                            , sample(min(out_value):max(out_value),n_violations,replace = TRUE)
+                            , error))
+    
     if(!is.null(input$ML_predictor_1)){
-      eval(parse(text = paste("user_df[[input$ML_outcome_1]] <- 2*as.numeric(as.factor(user_df[[input$ML_predictor_1]]))","rnorm(nrow(user_df),10,2)",sep="+")))
+      user_df[[input$ML_predictor_1]] <- as.factor(user_df[[input$ML_predictor_1]])
+      user_df[[input$ML_outcome_1]] <- assoc_strength*as.numeric(user_df[[input$ML_predictor_1]]) + adjusted_error$error
+        # rnorm(nrow(user_df),0,variability)
+      # eval(parse(text = paste("user_df[[input$ML_outcome_1]] <- 2*as.numeric(user_df[[input$ML_predictor_1]])","rnorm(nrow(user_df),10,2)",sep="+")))
     }
     
     user_df <- user_df %>% select(-temp_var_placeholder)
@@ -173,8 +184,12 @@ shinyServer(function(input, output, clientData, session) {
     dl_df
   })
   
-  output$test_plot <- renderPlot({
-    plot(user_df()$condition,user_df()$weight)
+  output$test_plot <- renderPlot({ # visualize forced association, put in tabset?
+    validate(
+      need(!is.null(input$ML_predictor_1), "")
+    )
+    
+    plot(user_df()[[input$ML_predictor_1]],user_df()[[input$ML_outcome_1]])
   })
   
     
