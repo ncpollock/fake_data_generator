@@ -41,6 +41,15 @@ h6 {
   box-shadow: 0 50vh 0 50vh #375a7f;
 }
 
+/* my face in upper right */
+#face-img {
+  border-radius: 70%;
+  border: 1px solid #ddd;
+  padding: 3px;
+  margin-left: 10px;
+  width:50px; /* you can use % */
+  height: auto;
+}  
 .sticky {
   position: sticky;
   top: 0;
