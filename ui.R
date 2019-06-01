@@ -14,7 +14,6 @@ shinyUI(
                  , fluidRow(
                    useShinydashboard()
                  )
-                 , h1("1. Add and Define Variables")
                  , fluidRow(id="GlobalTools",class="sticky"
                             , column(3,actionButton("add","Add New Variable"
                                                                      ,width = "100%"
@@ -25,16 +24,15 @@ shinyUI(
                                                     ,icon = icon("binoculars"))
                             )
                             , column(1, p(icon("align-justify"),"Rows:",style = "font-size: 20px;text-align:right;padding-top:10px;"))
-                            , column(3,sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE))
+                            , column(3,sliderInput("df_rows",label=NA,50,1000,value=100,ticks = FALSE))
                             , column(2,downloadButton("downloadData","Download",style="float:right;background-color: blue;"))
                  )
                  , fluidRow(
                    br()
                    , column(12,id = "var_header",column(3,"Variable Name"),column(4,"Type"),column(4,"Options / Details"))
                    )
-                 , h1("2 (Optional). Add and Define Relationships Between Variables")
                  , fluidRow(id="GlobalTools_ML",class="sticky"
-                            , column(6,actionButton("add_ML","Add New Association"
+                            , column(6,actionButton("add_ML","Add New Association (Optional)"
                                                     ,width = "100%"
                                                     ,style="background-color: green;"
                                                     ,icon = icon("plus-square")))
@@ -52,7 +50,9 @@ shinyUI(
                  # first variable with have greatest predictive power?
                  # or can selectize be ordered?
                  , h2(id = "no_assoc","There are no Variable Associations defined yet.")
-                 , tableOutput("show_inputs")
+                 
+                 # retain for testing
+                 # , tableOutput("show_inputs")
                  )
                
                # , tabPanel("Variable Associations", icon = icon("chain")
