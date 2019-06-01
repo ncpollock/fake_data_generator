@@ -118,7 +118,8 @@ init_ML <- function(ML_id){
 
 my_navbar_info <- gsub("[\r\n]", "",
                     div(
-                      icon("user fa-pull-right fa-3x")
+                      img(src="headshot.jpg",id="face-img",align="right")
+                      # icon("user fa-pull-right fa-3x")
                       , strong("Developed by: "),
                     br(),
                     a(href="https://ncpollock.github.io/"
