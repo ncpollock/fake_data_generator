@@ -125,6 +125,11 @@ shinyServer(function(input, output, clientData, session) {
           text = paste0("user_df <- user_df %>%
                         mutate(!!var := ",var_input,")")
           ))
+      } else if (input[[paste0("var_type_",i)]] == "Race"){
+        user_df <- user_df %>% 
+          mutate(!!var := sample(
+            c("White","Black","Hispanic","Asian","Native Hawaiian/Pacific Islander","American Indian/Alaska Native","Two or more races")
+            , input$df_rows, replace = TRUE))
       }
       
       
@@ -386,6 +391,11 @@ shinyServer(function(input, output, clientData, session) {
             , where = "afterEnd"
             , ui = column(4,id = paste0("var_input_col_",var_id),switch(
               input[[paste0("var_type_",var_id)]]
+              , "Race" = h6("Race and Ethnicity descriptions conforming to the "
+                            , a(href="https://nces.ed.gov/ipeds/report-your-data/race-ethnicity-collecting-data-for-reporting-purposes"
+                                , target="_blank"
+                                , "U.S. Department of Education guidelines.")
+                            )
               , "Custom R Code" = textInput(var_input_id,"",width="100%"
                                             , "ifelse(condition=='control','Check this out!',scales::dollar(weight))")
               , "Sequential Primary Key" = h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
