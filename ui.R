@@ -52,7 +52,7 @@ shinyUI(
                  , h2(id = "no_assoc","There are no Variable Associations defined yet.")
                  
                  # retain for testing
-                 # , tableOutput("show_inputs")
+                 , tableOutput("show_inputs")
                  )
                
                # , tabPanel("Variable Associations", icon = icon("chain")

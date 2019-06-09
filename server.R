@@ -155,6 +155,9 @@ shinyServer(function(input, output, clientData, session) {
     # do.call(rbind,lapply(test_df$a,function(x) test_df %>% filter(a == x) %>% mutate(c = 3)))
     # Mean + strength*value + error
     
+    # restrict predictors and outcomes to factors or numbers
+
+    if(!is.null(input$ML_predictor_1)){
     out_value <- user_df[[input$ML_outcome_1]]
     assoc_strength <- max(out_value)/10 # 1:10?
     variability <- sd(out_value)
@@ -166,8 +169,6 @@ shinyServer(function(input, output, clientData, session) {
                             | error > max(out_value)
                             , sample(min(out_value):max(out_value),n_violations,replace = TRUE)
                             , error))
-    
-    if(!is.null(input$ML_predictor_1)){
       user_df[[input$ML_predictor_1]] <- as.factor(user_df[[input$ML_predictor_1]])
       user_df[[input$ML_outcome_1]] <- assoc_strength*as.numeric(user_df[[input$ML_predictor_1]]) + adjusted_error$error
         # rnorm(nrow(user_df),0,variability)
@@ -217,10 +218,18 @@ shinyServer(function(input, output, clientData, session) {
         # , infoBoxOutput('df_rows')
         , infoBoxOutput('df_size',width = 6)
         , p("Note: Only the first 100 rows are shown in the preview.")
-        , plotOutput("test_plot")
         , tableOutput('preview_data')
         # , DT::dataTableOutput('preview_data_dt')
         , class = "on_top"
+      ))
+    })
+    
+    observeEvent(input$preview_ML,{
+      showModal(modalDialog(easyClose = TRUE,size = "l"
+                            , title = tags$b("Preview Association")
+                            , plotOutput("test_plot")
+                            , tableOutput('preview_data')
+                            , class = "on_top"
       ))
     })
     
@@ -437,9 +446,17 @@ shinyServer(function(input, output, clientData, session) {
         selector = "#no_assoc"
       )
       
+      valid_variables <- (
+        All_Inputs() %>%
+          filter(input_type == "var_type"
+                 & !(input_value %in% c(
+            "Long Filler Text","Sequential Primary Key","Names","Phone Numbers")))
+      )$input_number
+      
       variables <- (
         All_Inputs() %>%
-          filter(input_type == "var_name")
+          filter(input_type == "var_name"
+                 & input_number %in% valid_variables)
       )$input_value
       
       ML_id <- input$add_ML
@@ -453,7 +470,7 @@ shinyServer(function(input, output, clientData, session) {
                                      , style = "margin-top: 25px; border-right: 1px dashed black;"
                                      , selectInput(paste0("ML_predictor_",ML_id),NULL
                                                    , variables
-                                                   , multiple=TRUE))
+                                                   , multiple=FALSE))
                             , column(4,id = paste0("outcome_",ML_id)
                                      , style = "margin-top: 25px; border-right: 1px dashed black;"
                                      , selectInput(paste0("ML_outcome_",ML_id), NULL
