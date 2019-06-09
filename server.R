@@ -58,7 +58,7 @@ shinyServer(function(input, output, clientData, session) {
       
       var <- as.character(var_name$input_value)
       # put most frequently used at top to maximize performance!
-      if(input[[paste0("var_type_",i)]] == "Phone Numbers" ){
+      if(input[[paste0("var_type_",i)]] == "Phone Number" ){
         user_df <- user_df %>% 
           mutate(!!var := sapply(1:input$df_rows,function(x){
             paste(sample(100:999,1),sample(100:999,1),sample(1000:9990,1),sep="-")
@@ -81,7 +81,7 @@ shinyServer(function(input, output, clientData, session) {
         user_df <- user_df %>% 
           mutate(!!var := sample(month_var,input$df_rows,replace = TRUE))
         
-      } else if (input[[paste0("var_type_",i)]] == "States"){
+      } else if (input[[paste0("var_type_",i)]] == "State"){
         if(input[[paste0("var_state_abb_",i)]] == 0){
           state_var <- state.name
         } else {
@@ -98,7 +98,7 @@ shinyServer(function(input, output, clientData, session) {
         user_df <- user_df %>% 
           mutate(!!var := lapply(1:input$df_rows,function(x) lorem_ipsum[sample(1:length(lorem_ipsum),1)] ))
         
-      } else if (input[[paste0("var_type_",i)]] == "Days of Week"){
+      } else if (input[[paste0("var_type_",i)]] == "Day of Week"){
         if(input[[paste0("var_days_abb_",i)]] == 0){
           day_var <- weekday_full
         } else {
@@ -116,10 +116,18 @@ shinyServer(function(input, output, clientData, session) {
         user_df <- user_df %>% 
           mutate(!!var := as.Date(unlist(lapply(1:input$df_rows,function(x) sample(seq.Date(date_range[1]
                                                                              , date_range[2],1),1))), origin = "1970-01-01"))
-      } else if (input[[paste0("var_type_",i)]] == "Names"){
+      } else if (input[[paste0("var_type_",i)]] == "Name"){
         user_df <- user_df %>% 
           mutate(!!var := paste(sample(names_df$First,input$df_rows,replace=TRUE), sample(names_df$Last,input$df_rows,replace=TRUE)))
+      } else if (input[[paste0("var_type_",i)]] == "Custom R Code"){
+        eval(parse(
+          # text = paste0("user_df[var] <- 'TEST'")
+          text = paste0("user_df <- user_df %>%
+                        mutate(!!var := ",var_input,")")
+          ))
       }
+      
+      
       
       
     } # loop through variables
@@ -378,7 +386,8 @@ shinyServer(function(input, output, clientData, session) {
             , where = "afterEnd"
             , ui = column(4,id = paste0("var_input_col_",var_id),switch(
               input[[paste0("var_type_",var_id)]]
-              , "Sequential Primary Key" = , h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
+              , "Custom R Code" = textInput(var_input_id,"","'TEST_THIS_OUT'")
+              , "Sequential Primary Key" = h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
                                    column(3,numericInput(paste0("var_min_",var_id), "Min:", value = 0,width='100%'))
                                    ,column(3,numericInput(paste0("var_max_",var_id), "Max:", value = 10,width='100%'))
@@ -388,22 +397,22 @@ shinyServer(function(input, output, clientData, session) {
 
               , "Date Range" = dateRangeInput(var_input_id, "",end = Sys.Date() + 30)
               , "Nominal/Categorical" = textInput(var_input_id,"","control,low dose,high dose")
-              , "Phone Numbers" = h6("U.S. Phone Numbers in the format 123-123-1234.")
+              , "Phone Number" = h6("U.S. Phone Numbers in the format 123-123-1234.")
               , "Long Filler Text" = h6("Sentences from Lorem Ipsum.")
-              , "Names" = h6('First and Last names. For example, "John Smith" or "Jane Doe".')
+              , "Name" = h6('First and Last names. For example, "John Smith" or "Jane Doe".')
               , "Month" = fluidRow(
                 column(4,radioButtons(paste0("var_month_abb_",var_id), label = ""
                                       , choices = list("Full Names" = 0, "Abbreviations" = 1)
                                       , selected = 0))
                 , column(8,h6("Month names or abbreviations. For example, 'January' or 'Jan'"))
               )
-              , "States" = fluidRow(
+              , "State" = fluidRow(
                 column(4,radioButtons(paste0("var_state_abb_",var_id), label = ""
                                       , choices = list("Full Names" = 0, "Abbreviations" = 1)
                                       , selected = 0))
                 , column(8,h6("State names or abbreviations. For example, 'Michigan' or 'MI'"))
               )
-              , "Days of Week" = fluidRow(
+              , "Day of Week" = fluidRow(
                 column(4,radioButtons(paste0("var_days_abb_",var_id), label = ""
                                       , choices = list("Full Names" = 0, "Abbreviations" = 1)
                                       , selected = 0))

@@ -67,9 +67,11 @@ title_collapse <- function(x){
 var_type_selections <- list(
   'Numeric' 
   , 'Character' = list("Nominal/Categorical","Long Filler Text")
-  , 'Date' = list("Date Range","Days of Week","Month")
-  , 'Other' = list("Sequential Primary Key","Names","Phone Numbers","States")
+  , 'Date' = list("Date Range","Month","Day of Week")
+  , 'Other' = list("Custom R Code","Sequential Primary Key","Name","Phone Number","State")
 )
+
+# year, email address, College Major, Race, Companies, Illnesses?
 
 var_id <- 1
 init_var <- function(x,var_id){
