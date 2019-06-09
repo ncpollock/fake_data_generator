@@ -386,7 +386,8 @@ shinyServer(function(input, output, clientData, session) {
             , where = "afterEnd"
             , ui = column(4,id = paste0("var_input_col_",var_id),switch(
               input[[paste0("var_type_",var_id)]]
-              , "Custom R Code" = textInput(var_input_id,"","'TEST_THIS_OUT'")
+              , "Custom R Code" = textInput(var_input_id,"",width="100%"
+                                            , "ifelse(condition=='control','Check this out!',scales::dollar(weight))")
               , "Sequential Primary Key" = h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
                                    column(3,numericInput(paste0("var_min_",var_id), "Min:", value = 0,width='100%'))
@@ -396,7 +397,7 @@ shinyServer(function(input, output, clientData, session) {
                               )
 
               , "Date Range" = dateRangeInput(var_input_id, "",end = Sys.Date() + 30)
-              , "Nominal/Categorical" = textInput(var_input_id,"","control,low dose,high dose")
+              , "Nominal/Categorical" = textInput(var_input_id,"",width="100%","control,low dose,high dose")
               , "Phone Number" = h6("U.S. Phone Numbers in the format 123-123-1234.")
               , "Long Filler Text" = h6("Sentences from Lorem Ipsum.")
               , "Name" = h6('First and Last names. For example, "John Smith" or "Jane Doe".')
