@@ -68,7 +68,8 @@ var_type_selections <- list(
   'Numeric' 
   , 'Character' = list("Nominal/Categorical","Long Filler Text")
   , 'Date' = list("Date Range","Month","Day of Week")
-  , 'Other' = list("Custom R Code","Sequential Primary Key","Name","Phone Number","State")
+  , 'Demographics' = list("Name","Race","Phone Number","State")
+  , 'Other' = list("Sequential Primary Key","Custom R Code")
 )
 
 # year, email address, College Major, Race, Companies, Illnesses?
