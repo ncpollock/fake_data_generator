@@ -91,10 +91,11 @@ shinyUI(
                            a(href = "https://github.com/ncpollock/"
                              ,target="_blank"
                              ,"Code on GitHub"),
-                           align="center"))
+                           align="center")
+                        , tags$script(
+                          HTML(
+                            paste0("var header = $('.navbar> .container-fluid');header.append('"
+                                   , my_navbar_info,"');console.log(header)"))))
                # add my name in navbar
-               , tags$script(
-                 HTML(
-                   paste0("var header = $('.navbar> .container-fluid');header.append('"
-                          , my_navbar_info,"');console.log(header)")))
+               
                )))
