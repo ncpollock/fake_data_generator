@@ -21,7 +21,7 @@ shinyServer(function(input, output, clientData, session) {
       , stringsAsFactors = FALSE
     )
     
-    # force difference means between control and experimental
+    # force different means between control and experimental
     init_df$weight <- ifelse(init_df$condition=="Control"
                          , rnorm(n_participants,189,15)
                          , rnorm(n_participants,145,8))
@@ -57,6 +57,7 @@ shinyServer(function(input, output, clientData, session) {
       var_input <- as.character((All_Inputs() %>% filter(input_name == paste0("var_input_",i)))$input_value)
       
       var <- as.character(var_name$input_value)
+      
       # put most frequently used at top to maximize performance!
       if(input[[paste0("var_type_",i)]] == "Phone Number" ){
         user_df <- user_df %>% 
@@ -109,8 +110,9 @@ shinyServer(function(input, output, clientData, session) {
         
       } else if (input[[paste0("var_type_",i)]] == "Nominal/Categorical"){
         user_df <- user_df %>% 
-          mutate(!!var := unlist(lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) )))
-        
+          mutate(!!var := as.factor(
+            unlist(lapply(1:input$df_rows,function(x) sample(unlist(strsplit(var_input,",|, | ,")),1) )))
+          )
       } else if (input[[paste0("var_type_",i)]] == "Date Range"){
         date_range <- input[[paste0("var_input_",i)]]
         user_df <- user_df %>% 
@@ -161,31 +163,67 @@ shinyServer(function(input, output, clientData, session) {
       # eg level 1 receives mean assocated with -3 SD of original distribution
         #, level 6 receives mean associated with +3 SD.
         # this would help keep a similar distribution to the one defined by user
-    
-    
-    
+
     # 150 + -.05*user_df$weight + rnorm(nrow(user_df),150,5)
-    # do.call(rbind,lapply(test_df$a,function(x) test_df %>% filter(a == x) %>% mutate(c = 3)))
     # Mean + strength*value + error
     
-    # restrict predictors and outcomes to factors or numbers
-
+    # HARDCODE TEST 1 ##############################
     if(!is.null(input$ML_predictor_1)){
     out_value <- user_df[[input$ML_outcome_1]]
-    assoc_strength <- max(out_value)/10 # 1:10?
-    variability <- sd(out_value)
-    # adjusted_value <- sample(min(out_value):max(out_value),1)
-    adjusted_error <- data.frame(error = rnorm(nrow(user_df),0,variability)) 
-    n_violations <- nrow(adjusted_error %>% filter(error < min(out_value) | error > max(out_value)))
-    adjusted_error <- adjusted_error %>%
-      mutate(error = ifelse(error < min(out_value)
-                            | error > max(out_value)
-                            , sample(min(out_value):max(out_value),n_violations,replace = TRUE)
-                            , error))
-      user_df[[input$ML_predictor_1]] <- as.factor(user_df[[input$ML_predictor_1]])
-      user_df[[input$ML_outcome_1]] <- assoc_strength*as.numeric(user_df[[input$ML_predictor_1]]) + adjusted_error$error
+    # assoc_strength <- max(out_value)/10 # 1:10?
+    # assoc_strength <- min(out_value) + (max(out_value)*(input$ML_strength_1/100))
+    # assoc_strength <- mean(out_value)*(input$ML_strength_1/100)
+    assoc_strength <- (max(out_value)-min(out_value))*(input$ML_strength_1/100)
+    # assoc_strength <- input$ML_strength_1/100
+    
+    # variability <- sd(out_value)
+    # variability <- mean(out_value)*((input$ML_variability_1/100)*4)
+    variability <- mean(out_value)*input$ML_variability_1
+    
+    # adjusted_error <- data.frame(error = rnorm(nrow(user_df),0,variability)) 
+    error <- rnorm(nrow(user_df),0,variability)
+    # n_violations <- nrow(adjusted_error %>% filter(error < min(out_value) | error > max(out_value)))
+    # adjusted_error <- adjusted_error %>%
+    #   mutate(error = ifelse(error < min(out_value)
+    #                         | error > max(out_value)
+    #                         , sample(min(out_value):max(out_value),n_violations,replace = TRUE)
+    #                         , error))
+      # user_df[[input$ML_predictor_1]] <- as.factor(user_df[[input$ML_predictor_1]])
+      user_df[[input$ML_outcome_1]] <- normalize(assoc_strength*as.numeric(as.factor(user_df[[input$ML_predictor_1]])) + error
+                                                 , range_min = var_min
+                                                 , range_max = var_max)
+                                                 # , range_min = min(out_value)
+                                                 # , range_max = min(out_value) + (max(out_value)*(input$ML_strength_1/100))) + error
         # rnorm(nrow(user_df),0,variability)
       # eval(parse(text = paste("user_df[[input$ML_outcome_1]] <- 2*as.numeric(user_df[[input$ML_predictor_1]])","rnorm(nrow(user_df),10,2)",sep="+")))
+      
+      # HARDCODE TEST 2 ###############################
+      
+      if(nrow(
+        All_Inputs() %>% filter(input_name == "ML_predictor_2"))>0){
+      eval(parse(text = paste0(
+        "tree_m <- rpart("
+        , input$ML_outcome_2
+        , " ~ "
+        , paste(input$ML_predictor_1, collapse = " + ")
+        , ", data=user_df)"
+      )))
+      
+        out_value <- user_df[[input$ML_outcome_2]]
+      # variability <- mean(out_value)*input$ML_strength_2
+      
+      # adjusted_error <- data.frame(error = rnorm(nrow(user_df),0,variability)) 
+      # error <- rnorm(nrow(user_df),0,variability)
+      error <- sample(
+        c(0,rnorm(nrow(user_df),0,sd(out_value)))
+        , replace = TRUE
+        , size = nrow(user_df)
+        , prob = c(input$ML_strength_2,rep(100-input$ML_strength_2,nrow(user_df))))
+        
+      ## Get fitted class values
+      fitclass_tree <- predict(tree_m)
+      user_df[[input$ML_outcome_2]] <- fitclass_tree + error
+      }
     }
     
     user_df <- user_df %>% select(-temp_var_placeholder)
@@ -203,7 +241,16 @@ shinyServer(function(input, output, clientData, session) {
       need(!is.null(input$ML_predictor_1), "")
     )
     
+    if(is.numeric(user_df()[[input$ML_predictor_1]])) {
+    
+    ggplot(user_df(),aes_string(input$ML_predictor_1,input$ML_outcome_1)) +
+      geom_point() +
+      coord_cartesian(ylim = c(90, 230)) +
+      geom_smooth(method='lm') +
+      my_theme
+  } else {
     plot(user_df()[[input$ML_predictor_1]],user_df()[[input$ML_outcome_1]])
+  }
   })
   
     
@@ -304,8 +351,8 @@ shinyServer(function(input, output, clientData, session) {
       All_Inputs() 
     })
     
-    # Downloadable csv of selected dataset ----
-      # check that no two vars have same name
+    # Downloadable csv of selected dataset
+      # check that no two vars have same name?
       # other integrity constraints?
     output$downloadData <- downloadHandler(
       filename = "NP_FDG.csv"
@@ -397,13 +444,16 @@ shinyServer(function(input, output, clientData, session) {
                                 , "U.S. Department of Education guidelines.")
                             )
               , "Custom R Code" = textInput(var_input_id,"",width="100%"
-                                            , "ifelse(condition=='control','Check this out!',scales::dollar(weight))")
+                                            , sample(
+                                              c("ifelse(condition=='control','Check this out!',scales::dollar(weight))"
+                                                , "n():1"
+                                                , "pi"),1))
               , "Sequential Primary Key" = h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
-                                   column(3,numericInput(paste0("var_min_",var_id), "Min:", value = 0,width='100%'))
-                                   ,column(3,numericInput(paste0("var_max_",var_id), "Max:", value = 10,width='100%'))
-                                   ,column(3,numericInput(paste0("var_mean_",var_id), "Mean:", value = 5,width='100%'))
-                                   ,column(3,numericInput(paste0("var_sd_",var_id), "SD:", value = 1,width='100%'))
+                                   column(3,numericInput(paste0("var_min_",var_id), "Min:", value = 90,width='100%'))
+                                   ,column(3,numericInput(paste0("var_max_",var_id), "Max:", value = 230,width='100%'))
+                                   ,column(3,numericInput(paste0("var_mean_",var_id), "Mean:", value = 165,width='100%'))
+                                   ,column(3,numericInput(paste0("var_sd_",var_id), "SD:", value = 15,width='100%'))
                               )
 
               , "Date Range" = dateRangeInput(var_input_id, "",end = Sys.Date() + 30)
@@ -456,7 +506,7 @@ shinyServer(function(input, output, clientData, session) {
     }) #observe
     
     
-    # Associations.tab ###########################################################
+    # Associations ###########################################################
     
     # add a new association row when add button clicked
     # use add button increment value!
@@ -470,7 +520,7 @@ shinyServer(function(input, output, clientData, session) {
         All_Inputs() %>%
           filter(input_type == "var_type"
                  & !(input_value %in% c(
-            "Long Filler Text","Sequential Primary Key","Names","Phone Numbers")))
+            "Long Filler Text","Names","Phone Numbers")))
       )$input_number
       
       variables <- (
@@ -480,7 +530,8 @@ shinyServer(function(input, output, clientData, session) {
       )$input_value
       
       ML_id <- input$add_ML
-      
+
+      if(ML_id == 1){
       insertUI(
         selector = "#var_header_ML"
         , where = "afterEnd"
@@ -491,12 +542,19 @@ shinyServer(function(input, output, clientData, session) {
                                      , selectInput(paste0("ML_predictor_",ML_id),NULL
                                                    , variables
                                                    , multiple=FALSE))
-                            , column(4,id = paste0("outcome_",ML_id)
+                            , column(3,id = paste0("outcome_",ML_id)
                                      , style = "margin-top: 25px; border-right: 1px dashed black;"
                                      , selectInput(paste0("ML_outcome_",ML_id), NULL
                                                    # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
                                                    , variables))
-                            , column(4,id = paste0("ML_input_col_",ML_id),p(""))
+                            , column(3,id = paste0("ML_input_col_",ML_id)
+                                     # ,p("")
+                                     , sliderInput(paste0("ML_strength_",ML_id), "Association Strength",min = 0, max = 100, value = 80)
+                                     )
+                            , column(2
+                                     , sliderInput(paste0("ML_variability_",ML_id), "Variability",min = 0, max = 4, value = 20)
+                            )
+                            
                             , column(1
                                      , style = "margin-top: 25px;"
                                      , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
@@ -504,34 +562,37 @@ shinyServer(function(input, output, clientData, session) {
                             )
                  )
           )
-        # , ui = selectInput(paste0("ML_predictor_",1),'', variables, multiple=TRUE)
-        # , ui = init_ML(ML_id = input$add_ML)
-        # , ui = function(ML_id = input$add_ML){
-        #   column(12,id = paste0("div_ML_",ML_id)
-        #          , fluidRow(class = "variable-row"
-        #                     , column(3
-        #                              , style = "margin-top: 25px; border-right: 1px dashed black;"
-        #                              , selectInput(paste0("ML_predictor_",ML_id),''
-        #                                            , variables
-        #                                            , multiple=TRUE))
-        #                     , column(4,id = paste0("outcome_",ML_id)
-        #                              , style = "margin-top: 25px; border-right: 1px dashed black;"
-        #                              , selectInput(paste0("ML_outcome_",ML_id), NULL
-        #                                            # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-        #                                            , state.name))
-        #                     , column(4,id = paste0("ML_input_col_",ML_id),p(""))
-        #                     , column(1
-        #                              , style = "margin-top: 25px;"
-        #                              , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
-        #                              # , dynamic help buttons/tooltips based on variable type selection!
-        #                     )
-        #          )
-        #   )
-        # }
       ) # insertUI
-      
-      #update
-    })
+      } else if(ML_id == 2){
+      insertUI(
+        selector = "#var_header_ML"
+        , where = "afterEnd"
+        , ui = column(12,id = paste0("div_ML_",ML_id)
+                      , fluidRow(class = "variable-row"
+                                 , column(3
+                                          , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                          , selectInput(paste0("ML_predictor_",ML_id),NULL
+                                                        , variables
+                                                        , multiple=TRUE))
+                                 , column(4,id = paste0("outcome_",ML_id)
+                                          , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                          , selectInput(paste0("ML_outcome_",ML_id), NULL
+                                                        # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
+                                                        , variables))
+                                 , column(4,id = paste0("ML_input_col_",ML_id)
+                                          # ,p("")
+                                          , sliderInput(paste0("ML_strength_",ML_id), "Association Strength",min = 0, max = 100, value = 80)
+                                          )
+                                 , column(1
+                                          , style = "margin-top: 25px;"
+                                          , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
+                                          # , dynamic help buttons/tooltips based on variable type selection!
+                                 )
+                      )
+        )
+      ) # insertUI
+      }
+    }) # observeEvent
     
     observe({
       lapply(1:input$add_ML,function(ML_id){ 
@@ -545,26 +606,10 @@ shinyServer(function(input, output, clientData, session) {
           # lapply would work here...
           session$sendInputMessage(paste0("ML_predictor_",ML_id), list(value = NULL))
           session$sendInputMessage(paste0("ML_outcome_",ML_id), list(value = NULL))
-          
         })
         
       }) # lapply
     }) # observe
-    
-    # # update inputs to include all defined variables
-    # observe({ # init the page with a few types selected
-    #   
-    #   variables <- as.character(
-    #     All_Inputs() %>%
-    #       filter(grepl("var_name_",input_name,fixed = TRUE))
-    #   )
-    #   
-    #   for(i in 1:length(variables)){
-    #   if(!is.null(input[[paste0("var_name_",i)]])){
-    # 
-    #   }
-    #   }
-    # })
     
     
 # SANDBOX ###########################################################

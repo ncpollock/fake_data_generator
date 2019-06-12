@@ -20,17 +20,18 @@ charcoal <- '#3d3d3d'
 library(shiny)
 library(shinydashboard)
 library(shinyWidgets)
-useShinydashboard()
+useShinydashboard() # am I still using this?
 library(shinythemes)
 # library(shinyBS)
 # library(DT) # datatable breaks input capturing!
 # library(googleVis)
-# library(ggplot2)
+library(ggplot2) # graphics library
 # library(scales)
-library(dplyr)
+library(dplyr) # data wrangling
 library(tidyr)
 # library(maps)
-library(kableExtra)
+library(kableExtra) # table formatting
+library(rpart) # decision trees
 
 # load file resources
 lorem_ipsum <- readLines("lorem_ipsum.txt") %>%
@@ -40,27 +41,17 @@ lorem_ipsum <- readLines("lorem_ipsum.txt") %>%
 names_df <- read.csv("names.csv"
                      , stringsAsFactors = FALSE)
 
-# weekdays
-# weekdays(seq.Date(as.Date("2017-01-01"),as.Date("2017-01-07"),1))
-# weekdays(seq.Date(as.Date("2017-01-01"),as.Date("2017-01-07"),1),abbreviate = TRUE)
-weekday_full <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-weekday_abb <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
-
-# style column names / header for datatables
-# dt_column_head <- JS(
-#   "function(settings, json) {",
-#   "$(this.api().table().header()).css({'background-color': '#3d3d3d', 'color': '#fff'});",
-#   "}")
-
-# allow box collapse on title click
-title_collapse <- function(x){
-  HTML(
-    paste0('<strong class="box-title" data-widget="collapse" style="cursor: pointer;">'
-           ,x
-           ,'</strong>'))
+normalize <- function(x,range_min,range_max){
+   (range_max - range_min)*(
+    x - min(x)
+    )/(
+      max(x) - min(x)
+      ) + range_min
 }
 
-# var_type_selections <- c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")
+# weekdays
+weekday_full <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+weekday_abb <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
 # should sequential primary key be under Numeric?
   # grouped sequence, then user picks a character variable?
@@ -131,12 +122,12 @@ my_navbar_info <- gsub("[\r\n]", "",
 
 
 # set general theme for ggplots
-# my_theme <- theme(panel.background = element_blank(),
-#                   axis.text = element_text(size = '15'),
-#                   axis.title = element_text(size = '18'),
-#                   axis.line = element_line(color = 'black'),
-#                   strip.background = element_rect(fill = 'black'),
-#                   strip.text = element_text(color = 'white',size = '18'),
-#                   legend.position = "bottom",
-#                   legend.text = element_text(size = '18'),
-#                   legend.title = element_blank())
+my_theme <- theme(panel.background = element_blank(),
+                  axis.text = element_text(size = '15'),
+                  axis.title = element_text(size = '18'),
+                  axis.line = element_line(color = 'black'),
+                  strip.background = element_rect(fill = 'black'),
+                  strip.text = element_text(color = 'white',size = '18'),
+                  legend.position = "bottom",
+                  legend.text = element_text(size = '18'),
+                  legend.title = element_blank())
