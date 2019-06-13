@@ -1,4 +1,5 @@
 
+# scikit learn websites make blobs
 
 #initialize colors
 v_light_gray <- '#a3a3a3' #'#CDCDCD'
@@ -59,11 +60,11 @@ var_type_selections <- list(
   'Numeric' 
   , 'Character' = list("Nominal/Categorical","Long Filler Text")
   , 'Date' = list("Date Range","Month","Day of Week")
-  , 'Demographics' = list("Name","Race","Phone Number","State")
+  , 'Demographic' = list("Name","Race","Phone Number","Email Address","State")
   , 'Other' = list("Sequential Primary Key","Custom R Code")
 )
 
-# year, email address, College Major, Race, Companies, Illnesses?
+# year, College Major, Companies, Illnesses?
 
 var_id <- 1
 init_var <- function(x,var_id){
@@ -72,12 +73,12 @@ init_var <- function(x,var_id){
                     , column(3
                              , style = "margin-top: 25px; border-right: 1px dashed black;"
                              , textInput(paste0("var_name_",var_id), NULL, x))
-                    , column(4,id = paste0("var_type_col_",var_id)
+                    , column(3,id = paste0("var_type_col_",var_id)
                              , style = "margin-top: 25px; border-right: 1px dashed black;"
                              , selectInput(paste0("var_type_",var_id), NULL
                                            # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
                                            , var_type_selections))
-                    , column(4,id = paste0("var_input_col_",var_id),p(""))
+                    , column(5,id = paste0("var_input_col_",var_id),p(""))
                     , column(1
                              , style = "margin-top: 25px;"
                              , actionButton(paste0("var_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")

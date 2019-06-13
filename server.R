@@ -132,7 +132,20 @@ shinyServer(function(input, output, clientData, session) {
           mutate(!!var := sample(
             c("White","Black","Hispanic","Asian","Native Hawaiian/Pacific Islander","American Indian/Alaska Native","Two or more races")
             , input$df_rows, replace = TRUE))
+      } else if (input[[paste0("var_type_",i)]] == "Email Address"){
+        # use words from lorem ipsum for email usernames
+        words <- lorem_ipsum %>% strsplit(" ") %>% unlist() %>% gsub(pattern = "\\W",replacement = "")
+        usernames <- words[nchar(words) > 5]
+        
+        user_df <- user_df %>% 
+          mutate(!!var := paste0(
+            sample(
+              c(paste0(names_df$First,sample(1:99,length(names_df$First))),names_df$Last,usernames),input$df_rows,replace=TRUE)
+            , sample(c("@gmail.com","@hotmail.com","@school.edu","@army.gov","@store.com","@wowway.com","@state.gov")
+              , input$df_rows, replace = TRUE)))
       }
+      
+
       
       
       
@@ -436,8 +449,9 @@ shinyServer(function(input, output, clientData, session) {
           insertUI(
             selector = paste0("#var_type_col_",var_id)
             , where = "afterEnd"
-            , ui = column(4,id = paste0("var_input_col_",var_id),switch(
+            , ui = column(5,id = paste0("var_input_col_",var_id),switch(
               input[[paste0("var_type_",var_id)]]
+              , "Email Address" = h6("Random Email Addresses with various domains e.g., example@gmail.com, example@hotmail.com, example@school.edu, etc.")
               , "Race" = h6("Race and Ethnicity descriptions conforming to the "
                             , a(href="https://nces.ed.gov/ipeds/report-your-data/race-ethnicity-collecting-data-for-reporting-purposes"
                                 , target="_blank"
