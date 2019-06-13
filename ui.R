@@ -78,10 +78,30 @@ shinyUI(
                #  )
                
                , tabPanel('About/Help', icon = icon("question-circle")
-                        ,p("Some inspirations:"
-                           ,br(),"https://mockaroo.com/"
-                           ,br(),"https://ebsubudhi.shinyapps.io/DataGeneration/"
-                           ,br(),"https://www.onlinedatagenerator.com/")
+                          , h2("What Is Fake Data and Why Generate It?")
+                            , p("Although real data is increasingly easier to obtain (e.g., data.gov, kaggle.com), there are times when
+                                you may need a dataset with very specific attributes. This app was inspired by an onslought of course projects
+                                that, in order to begin the relevant work, required finding a suitable dataset first.")
+                          , h4("A few good reasons to create your own data:")
+                            , tags$ul(
+                              tags$li("Mocking up visualizations")
+                              , tags$li("Testing software applications")
+                              , tags$li("Testing database designs or queries")
+                              , tags$li("Learning statistics, data science, or business analytics")
+                              , tags$li("Simulations (e.g., probabilities or algorithms)")
+                              , tags$li("Teaching")
+                            )
+                          , h4("A few bad reasons:")
+                            , tags$ul(
+                              tags$li("Quickly reach your NIH grant funded survey research ",tags$i("response")," quota")
+                              , tags$li("Increase study effect sizes and minimize p-values so you can publish in ",tags$i("Nature"))
+                            )
+                        , h4("Other Data Generators:")
+                        , tags$ul(
+                           tags$li("https://mockaroo.com/")
+                           , tags$li("https://ebsubudhi.shinyapps.io/DataGeneration/")
+                           , tags$li("https://www.onlinedatagenerator.com/")
+                             )
                         ,p(strong("Developed by: "),
                            br(),
                            a(href="https://ncpollock.github.io/"
@@ -92,10 +112,10 @@ shinyUI(
                              ,target="_blank"
                              ,"Code on GitHub"),
                            align="center")
-                        , tags$script(
+                        , tags$script( # adds my name in navbar
                           HTML(
                             paste0("var header = $('.navbar> .container-fluid');header.append('"
                                    , my_navbar_info,"');console.log(header)"))))
-               # add my name in navbar
+               
                
                )))
