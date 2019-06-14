@@ -21,6 +21,12 @@ h6 {
     transition: background-color 2s ease-out;
     */
   }
+
+/* make a page with lots of text less intimidating to read */
+.padded_page {
+  padding-left: 15%;
+  padding-right: 15%;
+}
   
 /* simple footer to style with a <div>id="site-footer"</div> */
 /* could define ellaborate footer in footer.html */
