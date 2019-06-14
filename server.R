@@ -145,10 +145,6 @@ shinyServer(function(input, output, clientData, session) {
               , input$df_rows, replace = TRUE)))
       }
       
-
-      
-      
-      
       
     } # loop through variables
     
@@ -411,6 +407,7 @@ shinyServer(function(input, output, clientData, session) {
     # add a new variable row when add button clicked
     # use add button increment value!
     observeEvent(input$add, {
+      
       new_id <- variable_count()
       
       insertUI(
@@ -423,7 +420,8 @@ shinyServer(function(input, output, clientData, session) {
    
     observe({
     
-      lapply(1:(variable_count()+1),function(var_id){ 
+      row_ids <- isolate(1:(variable_count()+1))
+      lapply(row_ids,function(var_id){ 
     
         var_input_id <- paste0("var_input_",var_id)
 
