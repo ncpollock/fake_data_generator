@@ -87,6 +87,8 @@ shinyUI(
                               , tags$li("Increase study effect sizes and minimize p-values so you can publish in ",tags$i("Nature"))
                             )
                         , h4("Other Data Generators:")
+                        , p("Here are a few other data generators I found across the web and used as inspiration. I am not necessarily endorsing any of these.
+                            I'm simply offering them up as other potential sources or solutions.")
                         , tags$ul(
                            tags$li("https://mockaroo.com/")
                            , tags$li("https://ebsubudhi.shinyapps.io/DataGeneration/")

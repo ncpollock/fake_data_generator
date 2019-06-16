@@ -1,7 +1,8 @@
 
 #TO DO:
-  # fix date values!!!!!
   # prevent user from deleting the last variable?
+  # date range: allow format specifier
+  # numeric: allow int vs decimal specifier
 
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
@@ -73,6 +74,8 @@ shinyServer(function(input, output, clientData, session) {
                   , pnorm(var_max, mean=var_mean, sd=var_sd))
             , mean=var_mean, sd=var_sd) )
         
+          if(input[[paste0("var_num_type_",i)]]==1) user_df[[var]] <- round(user_df[[var]])
+        
       } else if (input[[paste0("var_type_",i)]] == "Month"){
         if(input[[paste0("var_month_abb_",i)]] == 0){
           month_var <- month.name
@@ -116,8 +119,11 @@ shinyServer(function(input, output, clientData, session) {
       } else if (input[[paste0("var_type_",i)]] == "Date Range"){
         date_range <- input[[paste0("var_input_",i)]]
         user_df <- user_df %>% 
-          mutate(!!var := as.Date(unlist(lapply(1:input$df_rows,function(x) sample(seq.Date(date_range[1]
-                                                                             , date_range[2],1),1))), origin = "1970-01-01"))
+          mutate(!!var := format(
+            as.Date(unlist(lapply(1:input$df_rows,function(x) sample(seq.Date(date_range[1]
+                                                                              , date_range[2],1),1))), origin = "1970-01-01")
+            , input[[paste0("var_date_format_",i)]])
+            )
       } else if (input[[paste0("var_type_",i)]] == "Name"){
         user_df <- user_df %>% 
           mutate(!!var := paste(sample(names_df$First,input$df_rows,replace=TRUE), sample(names_df$Last,input$df_rows,replace=TRUE)))
@@ -147,34 +153,6 @@ shinyServer(function(input, output, clientData, session) {
       
       
     } # loop through variables
-    
-    # test forced association methods
-    # 1 sort values to give high level factors high values and low levels low values
-    # user_df <- user_df %>%
-    #   mutate(condition = as.factor(condition)) %>%
-    #   arrange(condition)
-    # 
-    # user_df$weight = sort(user_df$weight)
-    
-    # 2 use predictions from statistical models, then add error
-    # user_df <- user_df %>%
-    #   mutate(condition = as.factor(condition))
-
-    # model <- lm(weight ~ condition,user_df) # linear model
-    # user_df$weight <- predict(model,newdata = user_df) # make predictions
-    
-    # 3 for one-to-one assocations
-      # , each level (L) in predictor generates a random normal distribution (D)
-      # based on the strength (S) of the association specified
-      # and the 
-      # Strength determines distribution width eg strong = 4, weak = 1 SD slices
-      # centered around D = rnrom(n,mean = )
-      # eg level 1 receives mean assocated with -3 SD of original distribution
-        #, level 6 receives mean associated with +3 SD.
-        # this would help keep a similar distribution to the one defined by user
-
-    # 150 + -.05*user_df$weight + rnorm(nrow(user_df),150,5)
-    # Mean + strength*value + error
     
     # HARDCODE TEST 1 ##############################
     if(!is.null(input$ML_predictor_1)){
@@ -262,6 +240,14 @@ shinyServer(function(input, output, clientData, session) {
   }
   })
   
+  output$tree_plot <- renderPlot({
+    
+    tree_test <- rpart(price ~ cut + color + clarity + depth + table + x + y + z,data=diamonds)
+    
+    prp(tree_test,type=2, extra="auto",branch=.5)
+    
+  })
+  
     
   # http://haozhu233.github.io/kableExtra/awesome_table_in_html.html
     output$preview_data <- function() {
@@ -270,9 +256,7 @@ shinyServer(function(input, output, clientData, session) {
         knitr::kable("html") %>%
         row_spec(0, bold = T, color = "white", background = "black") %>%
         kable_styling(bootstrap_options = c("striped", "hover")) %>%
-        scroll_box(width = "100%",height = "700px"
-                   # ,extra_css = "transform:rotateX(180deg);-ms-transform:rotateX(180deg);-webkit-transform:rotateX(180deg);"
-                   ) %>%
+        scroll_box(width = "100%",height = "700px") %>%
         footnote("Only the first 100 rows are shown in the preview.")
     }
     
@@ -297,6 +281,7 @@ shinyServer(function(input, output, clientData, session) {
       showModal(modalDialog(easyClose = TRUE,size = "l"
                             , title = tags$b("Preview Association")
                             , plotOutput("test_plot")
+                            , plotOutput("tree_plot")
                             , tableOutput('preview_data')
                             , class = "on_top"
       ))
@@ -417,7 +402,6 @@ shinyServer(function(input, output, clientData, session) {
       )
     })
     
-   
     observe({
     
       row_ids <- isolate(1:(variable_count()+1))
@@ -447,7 +431,7 @@ shinyServer(function(input, output, clientData, session) {
           insertUI(
             selector = paste0("#var_type_col_",var_id)
             , where = "afterEnd"
-            , ui = column(5,id = paste0("var_input_col_",var_id),switch(
+            , ui = column(6,id = paste0("var_input_col_",var_id),switch(
               input[[paste0("var_type_",var_id)]]
               , "Email Address" = h6("Random Email Addresses with various domains e.g., example@gmail.com, example@hotmail.com, example@school.edu, etc.")
               , "Race" = h6("Race and Ethnicity descriptions conforming to the "
@@ -455,21 +439,35 @@ shinyServer(function(input, output, clientData, session) {
                                 , target="_blank"
                                 , "U.S. Department of Education guidelines.")
                             )
-              , "Custom R Code" = textInput(var_input_id,"",width="100%"
+              , "Custom R Code" = textInput(var_input_id,"Code is assigned in a dplyr::mutate() function eg mutate(!!var = [Your code here])",width="100%"
                                             , sample(
                                               c("ifelse(condition=='control','Check this out!',scales::dollar(weight))"
                                                 , "n():1"
                                                 , "pi"),1))
               , "Sequential Primary Key" = h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
-                                   column(3,numericInput(paste0("var_min_",var_id), "Min:", value = 90,width='100%'))
-                                   ,column(3,numericInput(paste0("var_max_",var_id), "Max:", value = 230,width='100%'))
-                                   ,column(3,numericInput(paste0("var_mean_",var_id), "Mean:", value = 165,width='100%'))
-                                   ,column(3,numericInput(paste0("var_sd_",var_id), "SD:", value = 15,width='100%'))
+                                   column(2,numericInput(paste0("var_min_",var_id), "Min:", value = 90,width='100%'))
+                                   ,column(2,numericInput(paste0("var_max_",var_id), "Max:", value = 230,width='100%'))
+                                   ,column(2,numericInput(paste0("var_mean_",var_id), "Mean:", value = 165,width='100%'))
+                                   ,column(2,numericInput(paste0("var_sd_",var_id), "SD:", value = 15,width='100%'))
+                                   ,column(4,radioButtons(paste0("var_num_type_",var_id), label = ""
+                                                          , choices = list("Integer (eg 1234)" = 1, "Float (eg 1.234)" = 0)
+                                                          , selected = 1))
                               )
-
-              , "Date Range" = dateRangeInput(var_input_id, "",end = Sys.Date() + 30)
-              , "Nominal/Categorical" = textInput(var_input_id,"",width="100%","control,low dose,high dose")
+              , "Date Range" = fluidRow(
+                column(6,dateRangeInput(var_input_id, "",start = Sys.Date() - 365,end = Sys.Date()))
+                , column(6,selectInput(paste0("var_date_format_",var_id), "Date Format:"
+                                       , list(
+                                        "2019-06-15" = "%Y-%m-%d"
+                                        , "06/15/2019" = "%m/%d/%Y"
+                                        , "06/15/19" = "%D"
+                                        , "Saturday, June 15, 2019" = "%A, %B %d, %Y"
+                                        , "Sat Jun 15" = "%a %b %d"
+                                       )
+                                       )))
+              , "Nominal/Categorical" = fluidRow(
+                column(11,textInput(var_input_id,"Enter each category separated by a comma. eg Dog,Cat,Fish",width="100%","control,low dose,high dose"))
+                , column(1, style = "margin-top: 25px;",actionButton(paste0("var_cat_help_",var_id), "",icon=icon("question"),style="background-color: gray;")))
               , "Phone Number" = h6("U.S. Phone Numbers in the format 123-123-1234.")
               , "Long Filler Text" = h6("Sentences from Lorem Ipsum.")
               , "Name" = h6('First and Last names. For example, "John Smith" or "Jane Doe".')
@@ -493,8 +491,18 @@ shinyServer(function(input, output, clientData, session) {
               )
             ))
           )
-        
         }) # observeEvent when variable type is changed
+        
+        # modal help boxes
+        observeEvent(input[[paste0("var_cat_help_",var_id)]],{
+          showModal(modalDialog(easyClose = TRUE,size = "l"
+                                , title = tags$b("Instructions")
+                                , p("Enter each category separated by a comma. 
+                                    For example, if you wanted to create a variable to contain types of household pets,
+                                    you might enter: Dog,Cat,Fish")
+                                , class = "on_top"
+          ))
+        })
         
         # update ML options when variable names are updated
         observeEvent(

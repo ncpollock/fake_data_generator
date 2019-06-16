@@ -19,6 +19,7 @@ cyan <- '#43c0f5'
 charcoal <- '#3d3d3d'
 
 library(shiny)
+library(shinyBS) # tooltips
 library(shinydashboard)
 library(shinyWidgets)
 useShinydashboard() # am I still using this?
@@ -33,6 +34,7 @@ library(tidyr)
 # library(maps)
 library(kableExtra) # table formatting
 library(rpart) # decision trees
+library(rpart.plot) # decision tree plots
 
 # load file resources
 lorem_ipsum <- readLines("lorem_ipsum.txt") %>%
@@ -70,15 +72,14 @@ var_id <- 1
 init_var <- function(x,var_id){
   column(12,id = paste0("div_var_",var_id)
          , fluidRow(class = "variable-row"
-                    , column(3
+                    , column(2
                              , style = "margin-top: 25px; border-right: 1px dashed black;"
                              , textInput(paste0("var_name_",var_id), NULL, x))
                     , column(3,id = paste0("var_type_col_",var_id)
                              , style = "margin-top: 25px; border-right: 1px dashed black;"
                              , selectInput(paste0("var_type_",var_id), NULL
-                                           # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
                                            , var_type_selections))
-                    , column(5,id = paste0("var_input_col_",var_id),p(""))
+                    , column(6,id = paste0("var_input_col_",var_id),p(""))
                     , column(1
                              , style = "margin-top: 25px;"
                              , actionButton(paste0("var_delete_",var_id), "",icon=icon("trash"),style="background-color: red;")
@@ -104,7 +105,6 @@ init_ML <- function(ML_id){
                     , column(1
                              , style = "margin-top: 25px;"
                              , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
-                             # , dynamic help buttons/tooltips based on variable type selection!
                     )
          )
   )
@@ -112,8 +112,10 @@ init_ML <- function(ML_id){
 
 my_navbar_info <- gsub("[\r\n]", "",
                     div(
-                      img(src="headshot.jpg",id="face-img",align="right")
-                      # icon("user fa-pull-right fa-3x")
+                      a(href="https://ncpollock.github.io/"
+                        ,target="_blank"
+                      , img(src="headshot.jpg",id="face-img",align="right"))
+                      # icon("user fa-pull-right fa-3x") # generic user icon instead of my face
                       , strong("Developed by: "),
                     br(),
                     a(href="https://ncpollock.github.io/"
