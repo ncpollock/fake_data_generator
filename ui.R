@@ -41,30 +41,19 @@ shinyUI(
                    br()
                    , column(12,id = "var_header",column(3,"Variable Name"),column(4,"Type"),column(4,"Options / Details"))
                    )
-                 , fluidRow(id="GlobalTools_ML",class="sticky"
-                            , column(6,actionButton("add_ML","Add New Association (Optional)"
-                                                    ,width = "100%"
-                                                    ,style="background-color: green;"
-                                                    ,icon = icon("plus-square")))
-                            , column(6,actionButton("preview_ML","Preview Association"
-                                                    ,width = "100%"
-                                                    ,icon = icon("bar-chart"))
-                            )
-                 )
+                 , h2("Define Variable Relationships (Beta)")
                  , fluidRow(
                    br()
-                   , column(12,id = "var_header_ML",column(3,"Predictor(s)"),column(4,"Outcome"),column(4,"Options / Details"))
+                   , column(12,id = "var_header_ML",column(1,align="center","Active?"),column(3,"Predictor(s)"),column(2,"Outcome"),column(1,"Preview"),column(5,"Options"))
                  )
-                 # use selectize input
-                 # first variable with have greatest predictive power?
-                 # or can selectize be ordered?
-                 , h2(id = "no_assoc","There are no Variable Associations defined yet.",style="align:center;color:gray;")
+                 , uiOutput("Associations")
+                 # , h2(id = "no_assoc","There are no Variable Associations defined yet.",style="align:center;color:gray;")
                  
                  # retain for testing
                  # , tableOutput("show_inputs")
                  )
                
-               , tabPanel('About/Help', icon = icon("question-circle")
+               , tabPanel('About', icon = icon("question-circle")
                           , div(class= "padded_page"
                           , h2("What Is Fake Data and Why Generate It?")
                             , p("On this site, fake data is data that looks real but has been fabricated rather than observed/recorded. 

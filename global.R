@@ -89,26 +89,6 @@ init_var <- function(x,var_id){
   )
 }
 
-init_ML <- function(ML_id){
-  column(12,id = paste0("div_ML_",ML_id)
-         , fluidRow(class = "variable-row"
-                    , column(3
-                             , style = "margin-top: 25px; border-right: 1px dashed black;"
-                             , selectInput(paste0("ML_predictor_",ML_id),''
-                                           , state.name))
-                    , column(4,id = paste0("outcome_",ML_id)
-                             , style = "margin-top: 25px; border-right: 1px dashed black;"
-                             , selectInput(paste0("ML_outcome_",ML_id), NULL
-                                           # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-                                           , state.name))
-                    , column(4,id = paste0("ML_input_col_",ML_id),p(""))
-                    , column(1
-                             , style = "margin-top: 25px;"
-                             , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
-                    )
-         )
-  )
-}
 
 my_navbar_info <- gsub("[\r\n]", "",
                     div(

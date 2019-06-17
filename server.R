@@ -1,8 +1,6 @@
 
 #TO DO:
   # prevent user from deleting the last variable?
-  # date range: allow format specifier
-  # numeric: allow int vs decimal specifier
 
 # eval(parse(text = "1 + 1"))
 # sprintf("this is a %s for the %s","test","win")
@@ -35,12 +33,6 @@ shinyServer(function(input, output, clientData, session) {
     # get variable names specified by user
     variables <- All_Inputs() %>%
       filter(grepl("var_name_",input_name,fixed = TRUE))
-    
-    # wide format instead?
-    # duplicate identifiers # need dummy method
-    # test_wide <- All_Inputs() %>%
-    #   select(-input_name) %>%
-    #   spread(input_type,input_value)
     
     user_df <- data.frame(temp_var_placeholder = 1:input$df_rows) # replace with rows specified!
     for(i in variables$input_number){
@@ -129,7 +121,6 @@ shinyServer(function(input, output, clientData, session) {
           mutate(!!var := paste(sample(names_df$First,input$df_rows,replace=TRUE), sample(names_df$Last,input$df_rows,replace=TRUE)))
       } else if (input[[paste0("var_type_",i)]] == "Custom R Code"){
         eval(parse(
-          # text = paste0("user_df[var] <- 'TEST'")
           text = paste0("user_df <- user_df %>%
                         mutate(!!var := ",var_input,")")
           ))
@@ -155,7 +146,7 @@ shinyServer(function(input, output, clientData, session) {
     } # loop through variables
     
     # HARDCODE TEST 1 ##############################
-    if(!is.null(input$ML_predictor_1)){
+    if(input$activate_ML_1){
     out_value <- user_df[[input$ML_outcome_1]]
     # assoc_strength <- max(out_value)/10 # 1:10?
     # assoc_strength <- min(out_value) + (max(out_value)*(input$ML_strength_1/100))
@@ -165,7 +156,7 @@ shinyServer(function(input, output, clientData, session) {
     
     # variability <- sd(out_value)
     # variability <- mean(out_value)*((input$ML_variability_1/100)*4)
-    variability <- mean(out_value)*input$ML_variability_1
+    variability <- mean(out_value)*input$ML_variability_1 * 0.4
     
     # adjusted_error <- data.frame(error = rnorm(nrow(user_df),0,variability)) 
     error <- rnorm(nrow(user_df),0,variability)
@@ -181,18 +172,15 @@ shinyServer(function(input, output, clientData, session) {
                                                  , range_max = var_max)
                                                  # , range_min = min(out_value)
                                                  # , range_max = min(out_value) + (max(out_value)*(input$ML_strength_1/100))) + error
-        # rnorm(nrow(user_df),0,variability)
-      # eval(parse(text = paste("user_df[[input$ML_outcome_1]] <- 2*as.numeric(user_df[[input$ML_predictor_1]])","rnorm(nrow(user_df),10,2)",sep="+")))
-      
+
       # HARDCODE TEST 2 ###############################
       
-      if(nrow(
-        All_Inputs() %>% filter(input_name == "ML_predictor_2"))>0){
+      if(input$activate_ML_2){
       eval(parse(text = paste0(
         "tree_m <- rpart("
         , input$ML_outcome_2
         , " ~ "
-        , paste(input$ML_predictor_1, collapse = " + ")
+        , paste(input$ML_predictor_2, collapse = " + ")
         , ", data=user_df)"
       )))
       
@@ -232,7 +220,7 @@ shinyServer(function(input, output, clientData, session) {
     
     ggplot(user_df(),aes_string(input$ML_predictor_1,input$ML_outcome_1)) +
       geom_point() +
-      coord_cartesian(ylim = c(90, 230)) +
+      # coord_cartesian(ylim = c(90, 230)) + # for testing
       geom_smooth(method='lm') +
       my_theme
   } else {
@@ -242,9 +230,17 @@ shinyServer(function(input, output, clientData, session) {
   
   output$tree_plot <- renderPlot({
     
-    tree_test <- rpart(price ~ cut + color + clarity + depth + table + x + y + z,data=diamonds)
+    # tree_test <- rpart(price ~ cut + color + clarity + depth + table + x + y + z,data=diamonds)
     
-    prp(tree_test,type=2, extra="auto",branch=.5)
+    eval(parse(text = paste0(
+      "tree_preview <- rpart("
+      , input$ML_outcome_2
+      , " ~ "
+      , paste(input$ML_predictor_2, collapse = " + ")
+      , ", data=user_df())"
+    )))
+    
+    prp(tree_preview,type=2, extra="auto",branch=.5)
     
   })
   
@@ -277,12 +273,18 @@ shinyServer(function(input, output, clientData, session) {
       ))
     })
     
-    observeEvent(input$preview_ML,{
+    observeEvent(input$ML_preview_1,{
+      showModal(modalDialog(easyClose = TRUE,size = "l"
+                            , title = tags$b("Preview Simple Bivariate Association")
+                            , plotOutput("test_plot")
+                            , class = "on_top"
+      ))
+    })
+    
+    observeEvent(input$ML_preview_2,{
       showModal(modalDialog(easyClose = TRUE,size = "l"
                             , title = tags$b("Preview Association")
-                            , plotOutput("test_plot")
                             , plotOutput("tree_plot")
-                            , tableOutput('preview_data')
                             , class = "on_top"
       ))
     })
@@ -306,17 +308,6 @@ shinyServer(function(input, output, clientData, session) {
           filter(grepl("var_name_",input_name,fixed = TRUE)) %>%
           summarise(input_name = n_distinct(input_name)))$input_name
     })
-    
-    # output$df_rows <- renderInfoBox({
-    # 
-    #   infoBox(
-    #     # nrow(init_df()),
-    #     sliderInput("df_rows",label=NA,1,1000,value=100,ticks = FALSE),
-    #            title = "Number of Rows",
-    #            icon=icon("align-justify"),
-    #            color="yellow",
-    #           fill=TRUE)
-    # })
     
     output$df_size <- renderInfoBox({
 
@@ -404,7 +395,7 @@ shinyServer(function(input, output, clientData, session) {
     
     observe({
     
-      row_ids <- isolate(1:(variable_count()+1))
+      row_ids <- 1:(variable_count()+1)
       lapply(row_ids,function(var_id){ 
     
         var_input_id <- paste0("var_input_",var_id)
@@ -439,11 +430,13 @@ shinyServer(function(input, output, clientData, session) {
                                 , target="_blank"
                                 , "U.S. Department of Education guidelines.")
                             )
-              , "Custom R Code" = textInput(var_input_id,"Code is assigned in a dplyr::mutate() function eg mutate(!!var = [Your code here])",width="100%"
+              , "Custom R Code" = fluidRow(
+                column(11,textInput(var_input_id,"Code is assigned in a dplyr::mutate() function eg mutate(!!var = [Your code here])",width="100%"
                                             , sample(
                                               c("ifelse(condition=='control','Check this out!',scales::dollar(weight))"
                                                 , "n():1"
-                                                , "pi"),1))
+                                                , "pi"),1)))
+                , column(1, style = "margin-top: 25px;",actionButton(paste0("var_R_help_",var_id), "",icon=icon("question"),style="background-color: gray;")))
               , "Sequential Primary Key" = h6("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
               , "Numeric" = fluidRow(
                                    column(2,numericInput(paste0("var_min_",var_id), "Min:", value = 90,width='100%'))
@@ -503,22 +496,68 @@ shinyServer(function(input, output, clientData, session) {
                                 , class = "on_top"
           ))
         })
+        observeEvent(input[[paste0("var_R_help_",var_id)]],{
+          showModal(modalDialog(easyClose = TRUE,size = "l"
+                                , title = tags$b("Instructions")
+                                , p("The Custom R Code variable type allows you to create your own custom variables using the R language! 
+                                    The text you enter is evaluated in a dplyr::mutate() statement as follows: 
+                                    mutate(data, [my_variable] = [The Custom R Code enterred]). Some possible use cases
+                                    include feature engineering (you can refer to other variables you have defined by name without quotes)
+                                    , custom relationships (eg using conditional logic or linear regression predictions)
+                                    , or custom formatting (eg scales::dollar([my_numeric_variable]).")
+                                , class = "on_top"
+                                ))
+        })
         
         # update ML options when variable names are updated
-        observeEvent(
-          {input[[paste0("var_name_",var_id)]]
-            input$add_ML}
-          , {
+        observeEvent(input[[paste0("var_name_",var_id)]], {
+          
+            isolate({
+              all_variables <- (
+                All_Inputs() %>%
+                  filter(input_type == "var_name")
+              )$input_value
+              
+              ok_variables <- (
+                All_Inputs() %>%
+                  filter(input_type == "var_type"
+                         & !(input_value %in% c(
+                           "Long Filler Text","Names","Phone Numbers","Email Address")))
+              )$input_number
+              
+              num_variables <- (
+                All_Inputs() %>%
+                  filter(input_type == "var_type"
+                         & (input_value %in% c(
+                           "Numeric")))
+              )$input_number
+              
+              num_outcome_variables <- (
+                All_Inputs() %>%
+                  filter(input_type == "var_name"
+                         & input_number %in% num_variables)
+              )$input_value
+              
+              simple_variables <- (
+                All_Inputs() %>%
+                  filter(input_type == "var_name"
+                         & input_number %in% ok_variables)
+              )$input_value
+            })
 
-            variables <- (
-              All_Inputs() %>%
-                filter(input_type == "var_name")
-            )$input_value
-
-          for(i in 0:input$add_ML){
-          updateSelectInput(session, paste0("ML_predictor_",i),NULL,variables
-                            ,selected = variables[1])
+          for(i in 1){
+          updateSelectInput(session, paste0("ML_predictor_",i),NULL,simple_variables
+                            ,selected = simple_variables[1])
+            updateSelectInput(session, paste0("ML_outcome_",i),NULL,num_outcome_variables
+                              ,selected = num_outcome_variables[1])
           }
+            
+            for(i in 2){
+              updateSelectInput(session, paste0("ML_predictor_",i),NULL,simple_variables
+                                ,selected = simple_variables[1])
+              updateSelectInput(session, paste0("ML_outcome_",i),NULL,simple_variables
+                                ,selected = simple_variables[1])
+            }
 
         }) # observeEvent when variable names change
         
@@ -528,174 +567,95 @@ shinyServer(function(input, output, clientData, session) {
     
     # Associations ###########################################################
     
-    # add a new association row when add button clicked
-    # use add button increment value!
-    observeEvent(input$add_ML, {
+    output$Associations <- renderUI({
       
-      removeUI(
-        selector = "#no_assoc"
+      isolate({
+        all_variables <- (
+          All_Inputs() %>%
+            filter(input_type == "var_name")
+        )$input_value
+        
+        ok_variables <- (
+          All_Inputs() %>%
+            filter(input_type == "var_type"
+                   & !(input_value %in% c(
+                     "Long Filler Text","Names","Phone Numbers","Email Address")))
+        )$input_number
+        
+        num_variables <- (
+          All_Inputs() %>%
+            filter(input_type == "var_type"
+                   & (input_value %in% c(
+                     "Numeric")))
+        )$input_number
+        
+        num_outcome_variables <- (
+          All_Inputs() %>%
+            filter(input_type == "var_name"
+                   & input_number %in% num_variables)
+        )$input_value
+        
+        simple_variables <- (
+          All_Inputs() %>%
+            filter(input_type == "var_name"
+                   & input_number %in% ok_variables)
+        )$input_value
+      })
+      
+      fluidRow(column(12,id = paste0("div_ML_",1)
+             , fluidRow(class = "variable-row"
+                        , column(1, align="center"
+                                 , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                 , checkboxInput(("activate_ML_1"), label = "",width="100%"))
+                        , column(3, style = "margin-top: 25px; border-right: 1px dashed black;"
+                                 , selectInput(paste0("ML_predictor_",1),NULL
+                                               , simple_variables
+                                               , multiple=FALSE))
+                        , column(2
+                                 , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                 , selectInput(paste0("ML_outcome_",1),NULL
+                                               , num_outcome_variables))
+                        , column(1, style = "margin-top: 25px;"
+                                 , actionButton(paste0("ML_preview_",1), "",icon=icon("eye"),style="background-color: gray;"))
+                        , column(2, sliderInput(paste0("ML_strength_",1), "Strength",min = 0, max = 100, value = 80)
+                        )
+                        , column(2
+                                 , sliderInput(paste0("ML_variability_",1), "Variability",min = 0, max = 20, value = 3)
+                        )
+                        
+                        , column(1
+                                 , style = "margin-top: 25px;"
+                                 , actionButton(paste0("ML_delete_",1), "",icon=icon("trash"),style="background-color: red;")
+                        )
+             )
       )
-      
-      valid_variables <- (
-        All_Inputs() %>%
-          filter(input_type == "var_type"
-                 & !(input_value %in% c(
-            "Long Filler Text","Names","Phone Numbers")))
-      )$input_number
-      
-      variables <- (
-        All_Inputs() %>%
-          filter(input_type == "var_name"
-                 & input_number %in% valid_variables)
-      )$input_value
-      
-      ML_id <- input$add_ML
-
-      if(ML_id == 1){
-      insertUI(
-        selector = "#var_header_ML"
-        , where = "afterEnd"
-        , ui = column(12,id = paste0("div_ML_",ML_id)
-                 , fluidRow(class = "variable-row"
-                            , column(3
-                                     , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                     , selectInput(paste0("ML_predictor_",ML_id),NULL
-                                                   , variables
-                                                   , multiple=FALSE))
-                            , column(3,id = paste0("outcome_",ML_id)
-                                     , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                     , selectInput(paste0("ML_outcome_",ML_id), NULL
-                                                   # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-                                                   , variables))
-                            , column(3,id = paste0("ML_input_col_",ML_id)
-                                     # ,p("")
-                                     , sliderInput(paste0("ML_strength_",ML_id), "Association Strength",min = 0, max = 100, value = 80)
-                                     )
-                            , column(2
-                                     , sliderInput(paste0("ML_variability_",ML_id), "Variability",min = 0, max = 4, value = 20)
-                            )
-                            
-                            , column(1
-                                     , style = "margin-top: 25px;"
-                                     , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
-                                     # , dynamic help buttons/tooltips based on variable type selection!
-                            )
-                 )
-          )
-      ) # insertUI
-      } else if(ML_id == 2){
-      insertUI(
-        selector = "#var_header_ML"
-        , where = "afterEnd"
-        , ui = column(12,id = paste0("div_ML_",ML_id)
-                      , fluidRow(class = "variable-row"
-                                 , column(3
-                                          , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                          , selectInput(paste0("ML_predictor_",ML_id),NULL
-                                                        , variables
-                                                        , multiple=TRUE))
-                                 , column(4,id = paste0("outcome_",ML_id)
-                                          , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                          , selectInput(paste0("ML_outcome_",ML_id), NULL
-                                                        # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-                                                        , variables))
-                                 , column(4,id = paste0("ML_input_col_",ML_id)
-                                          # ,p("")
-                                          , sliderInput(paste0("ML_strength_",ML_id), "Association Strength",min = 0, max = 100, value = 80)
-                                          )
-                                 , column(1
-                                          , style = "margin-top: 25px;"
-                                          , actionButton(paste0("ML_delete_",ML_id), "",icon=icon("trash"),style="background-color: red;")
-                                          # , dynamic help buttons/tooltips based on variable type selection!
-                                 )
-                      )
-        )
-      ) # insertUI
-      }
-    }) # observeEvent
-    
-    observe({
-      lapply(1:input$add_ML,function(ML_id){ 
-        
-        observeEvent(input[[paste0("ML_delete_",ML_id)]], {
-          removeUI(
-            selector = paste0("#div_ML_",ML_id)
-          )
-          # nullify inputs that are removed from ui
-          # need to add each input id name to remove...
-          # lapply would work here...
-          session$sendInputMessage(paste0("ML_predictor_",ML_id), list(value = NULL))
-          session$sendInputMessage(paste0("ML_outcome_",ML_id), list(value = NULL))
-        })
-        
-      }) # lapply
-    }) # observe
+      , column(12,id = paste0("div_ML_",2)
+               , fluidRow(class = "variable-row"
+                          , column(1,align="center"
+                                   , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                   , checkboxInput(("activate_ML_2"), label = "",width="100%"))
+                          , column(3
+                                   , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                   , selectInput(paste0("ML_predictor_",2),NULL
+                                                 , simple_variables
+                                                 , multiple=TRUE))
+                          , column(2,id = paste0("outcome_",2)
+                                   , style = "margin-top: 25px; border-right: 1px dashed black;"
+                                   , selectInput(paste0("ML_outcome_",2), NULL
+                                                 , simple_variables))
+                          , column(1, style = "margin-top: 25px;"
+                                   , actionButton(paste0("ML_preview_",2), "",icon=icon("eye"),style="background-color: gray;"))
+                          , column(4,id = paste0("ML_input_col_",2)
+                                   # ,p("")
+                                   , sliderInput(paste0("ML_strength_",2), "Strength",min = 0, max = 100, value = 80)
+                          )
+                          , column(1
+                                   , style = "margin-top: 25px;"
+                                   , actionButton(paste0("ML_delete_",2), "",icon=icon("trash"),style="background-color: red;")
+                          )
+               )
+      ))
+    })
     
     
-# SANDBOX ###########################################################
-#     
-    
-    # output$dynamic_inputs <- renderUI({
-    #   
-    #   lapply(names(init_df()),function(x){
-    #   tagList(
-    #     fluidRow(class = "variable-row"
-    #       , column(4
-    #              , style = "margin-top: 25px;"
-    #              , textInput(paste0(x,grep(x,names(init_df()))), NULL, x))
-    #       , column(4
-    #                , style = "margin-top: 25px;"
-    #                , selectInput(paste0("var_type",grep(x,names(init_df()))), NULL
-    #                              # two types of var types: atomic (numeric, character, factor) vs pre-defined (primary key, names, phone numbers)
-    #                              , c("Sequential Primary Key","Numeric","Date Range","Character String: Nominal","Character String: Long Text")))
-    #     , column(4
-    #              , style = "margin-top: 25px;"
-    #              , actionButton(paste0("delete_column",x), "Delete Column",icon=icon("trash"),style="background-color: red;")
-    #                # , dynamic help buttons based on variable type selection!
-    #                )
-    #   )
-    #   )
-    #   })
-    # })
-    # 
-    # output$dynamic_inputs_2 <- renderUI({
-    #   lapply(names(init_df()),function(x){
-    #     # if (is.null(input[[paste0("var_type",grep(x,names(init_df())))]]))
-    #     #   return()
-    #     fluidRow(class = "variable-row"
-    #       , switch(
-    #       input[[paste0("var_type",grep(x,names(init_df())))]] # may need this in a different chunk
-    #       , "Sequential Primary Key" = , column(12, style = "padding-top: 25px;",p("Sequential integers from 1 to the number of rows. Can serve as a unique ID."))
-    #       , "Numeric" = column(12,sliderInput("dynamic", "",min = 1, max = 20, value = 10))
-    #       , "Date Range" = column(12,dateRangeInput("dynamic", ""))
-    #     ))
-    #     # )
-    #   })
-    # })
-    
-    # observeEvent(input$add, {
-    #   var_id <- variable_count() + 1
-    #   insertUI(
-    #     selector = paste0("#var_type_col_",var_id)
-    #     , where = "afterEnd"
-    #     , ui = column(4,id = paste0("var_input_col_",var_id),switch(
-    #       input[[paste0("var_type_",var_id)]]
-    #       , "Sequential Primary Key" = , p("Sequential integers from 1 to the number of rows. Can serve as a unique ID.")
-    #       , "Numeric" = fluidRow(
-    #         column(4,numericInput(paste0("var_input_min_",var_id), "Min:", value = 0,width='100%'))
-    #         ,column(4,numericInput(paste0("var_input_max_",var_id), "Max:", value = 10,width='100%'))
-    #         ,column(4,numericInput(paste0("var_input_mean_",var_id), "Mean:", value = 10,width='100%'))
-    #       )
-    #       
-    #       , "Date Range" = dateRangeInput(paste0("var_input_",var_id), "")
-    #       , "Nominal/Categorical" = textInput(paste0("var_input_",var_id),"","experimental,low dose,high dose")
-    #       
-    #       # should pull randomly from a full lorem ipsum implementation!
-    #       # instead just provide descriptive text that each row will containe random filler text, no need for an input here
-    #       , "Long Filler Text" = textInput(paste0("var_input_",var_id),"","Lorem ipsum dolor sit amet, consectetur adipiscing elit")
-    #     ))
-    #   )
-    #   
-    # })
-    
-})
+}) # END
