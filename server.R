@@ -156,7 +156,7 @@ shinyServer(function(input, output, clientData, session) {
     
     # variability <- sd(out_value)
     # variability <- mean(out_value)*((input$ML_variability_1/100)*4)
-    variability <- mean(out_value)*input$ML_variability_1 * 0.4
+    variability <- mean(out_value)*input$ML_variability_1 * 3
     
     # adjusted_error <- data.frame(error = rnorm(nrow(user_df),0,variability)) 
     error <- rnorm(nrow(user_df),0,variability)
@@ -167,11 +167,9 @@ shinyServer(function(input, output, clientData, session) {
     #                         , sample(min(out_value):max(out_value),n_violations,replace = TRUE)
     #                         , error))
       # user_df[[input$ML_predictor_1]] <- as.factor(user_df[[input$ML_predictor_1]])
-      user_df[[input$ML_outcome_1]] <- normalize(assoc_strength*as.numeric(as.factor(user_df[[input$ML_predictor_1]])) + error
+      user_df[[input$ML_outcome_1]] <- normalize(mean(out_value) + assoc_strength*as.numeric(as.factor(user_df[[input$ML_predictor_1]])) + error
                                                  , range_min = var_min
                                                  , range_max = var_max)
-                                                 # , range_min = min(out_value)
-                                                 # , range_max = min(out_value) + (max(out_value)*(input$ML_strength_1/100))) + error
 
       # HARDCODE TEST 2 ###############################
       
