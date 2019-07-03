@@ -156,21 +156,18 @@ shinyServer(function(input, output, clientData, session) {
     
     # variability <- sd(out_value)
     # variability <- mean(out_value)*((input$ML_variability_1/100)*4)
-    variability <- mean(out_value)*input$ML_variability_1 * 3
+    variability <- mean(out_value)*input$ML_variability_1 * 2
     
-    # adjusted_error <- data.frame(error = rnorm(nrow(user_df),0,variability)) 
     error <- rnorm(nrow(user_df),0,variability)
-    # n_violations <- nrow(adjusted_error %>% filter(error < min(out_value) | error > max(out_value)))
-    # adjusted_error <- adjusted_error %>%
-    #   mutate(error = ifelse(error < min(out_value)
-    #                         | error > max(out_value)
-    #                         , sample(min(out_value):max(out_value),n_violations,replace = TRUE)
-    #                         , error))
-      # user_df[[input$ML_predictor_1]] <- as.factor(user_df[[input$ML_predictor_1]])
-      user_df[[input$ML_outcome_1]] <- normalize(mean(out_value) + assoc_strength*as.numeric(as.factor(user_df[[input$ML_predictor_1]])) + error
+
+    b_x <- assoc_strength*as.numeric(as.factor(user_df[[input$ML_predictor_1]]))
+    if(input$ML_shape_1 == FALSE) b_x <- b_x^2
+      user_df[[input$ML_outcome_1]] <- normalize(mean(out_value) + b_x + error
                                                  , range_min = var_min
                                                  , range_max = var_max)
-
+      if(input$ML_direction_1 == FALSE) user_df[[input$ML_outcome_1]] <- -user_df[[input$ML_outcome_1]]
+    }
+    
       # HARDCODE TEST 2 ###############################
       
       if(input$activate_ML_2){
@@ -197,7 +194,6 @@ shinyServer(function(input, output, clientData, session) {
       fitclass_tree <- predict(tree_m)
       user_df[[input$ML_outcome_2]] <- fitclass_tree + error
       }
-    }
     
     user_df <- user_df %>% select(-temp_var_placeholder)
     user_df
@@ -608,22 +604,27 @@ shinyServer(function(input, output, clientData, session) {
              , fluidRow(class = "variable-row"
                         , column(1, align="center"
                                  , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                 , checkboxInput("activate_ML_1", label = "",width="100%"))
-                        , column(3, style = "margin-top: 25px; border-right: 1px dashed black;"
+                                 # , checkboxInput("activate_ML_1", label = "",width="100%"))
+                                 , switchInput('activate_ML_1',onLabel='On',offLabel = 'Off',offStatus = 'danger'))
+                        , column(2, style = "margin-top: 25px; border-right: 1px dashed black;"
                                  , selectInput(paste0("ML_predictor_",1),NULL
                                                , simple_variables
                                                , multiple=FALSE))
-                        , column(3
+                        , column(2
                                  , style = "margin-top: 25px; border-right: 1px dashed black;"
                                  , selectInput(paste0("ML_outcome_",1),NULL
                                                , num_outcome_variables))
-                        , column(1, style = "margin-top: 25px; border-right: 1px dashed black;"
-                                 , actionButton(paste0("ML_preview_",1), "",icon=icon("eye"),style="background-color: gray;"))
+                        , column(2, style = "margin-top: 10px; border-right: 1px dashed black;"
+                                 , switchInput('ML_direction_1',value=TRUE,onLabel='Positive',offLabel = 'Negative',offStatus = 'danger')
+                                 , switchInput('ML_shape_1',value=TRUE,onLabel='Linear  ',offLabel = 'Curvilinear',offStatus = 'warning')
+                                 )
                         , column(2, sliderInput(paste0("ML_strength_",1), "Strength",min = 0, max = 100, value = 80)
                         )
                         , column(2
                                  , sliderInput(paste0("ML_variability_",1), "Variability",min = 0, max = 20, value = 3)
                         )
+                        , column(1, style = "margin-top: 25px; border-right: 1px dashed black;"
+                                 , actionButton(paste0("ML_preview_",1), "",icon=icon("eye"),style="background-color: gray;"))
                         
                         # , column(1
                         #          , style = "margin-top: 25px;"
@@ -635,21 +636,22 @@ shinyServer(function(input, output, clientData, session) {
                , fluidRow(class = "variable-row"
                           , column(1,align="center"
                                    , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                   , checkboxInput("activate_ML_2", label = "",width="100%"))
-                          , column(3
+                                   # , checkboxInput("activate_ML_2", label = "",width="100%"))
+                                   , switchInput('activate_ML_2',onLabel='On',offLabel = 'Off',offStatus = 'danger'))
+                          , column(2
                                    , style = "margin-top: 25px; border-right: 1px dashed black;"
                                    , selectInput(paste0("ML_predictor_",2),NULL
                                                  , simple_variables
                                                  , multiple=TRUE))
-                          , column(3,id = paste0("outcome_",2)
+                          , column(2,id = paste0("outcome_",2)
                                    , style = "margin-top: 25px; border-right: 1px dashed black;"
                                    , selectInput(paste0("ML_outcome_",2), NULL
                                                  , simple_variables))
-                          , column(1, style = "margin-top: 25px; border-right: 1px dashed black;"
-                                   , actionButton(paste0("ML_preview_",2), "",icon=icon("eye"),style="background-color: gray;"))
-                          , column(4,id = paste0("ML_input_col_",2)
+                          , column(6,id = paste0("ML_input_col_",2)
                                    , sliderInput(paste0("ML_strength_",2), "Strength",min = 0, max = 100, value = 80)
                           )
+                          , column(1, style = "margin-top: 25px; border-right: 1px dashed black;"
+                                   , actionButton(paste0("ML_preview_",2), "",icon=icon("eye"),style="background-color: gray;"))
                           # , column(1
                           #          , style = "margin-top: 25px;"
                           #          , actionButton(paste0("ML_delete_",2), "",icon=icon("trash"),style="background-color: red;")
