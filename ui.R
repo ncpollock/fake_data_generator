@@ -44,7 +44,7 @@ shinyUI(
                  , h2("Define Variable Relationships (Beta)")
                  , fluidRow(
                    br()
-                   , column(12,id = "var_header_ML",column(1,align="center","Active?"),column(3,"Predictor(s)"),column(2,"Outcome"),column(1,"Preview"),column(5,"Options"))
+                   , column(12,id = "var_header_ML",column(1,align="center","Active?"),column(3,"Predictor(s)"),column(3,"Outcome"),column(1,"Preview"),column(4,"Options"))
                  )
                  , uiOutput("Associations")
                  # , h2(id = "no_assoc","There are no Variable Associations defined yet.",style="align:center;color:gray;")

@@ -211,7 +211,7 @@ shinyServer(function(input, output, clientData, session) {
     dl_df
   })
   
-  output$test_plot <- renderPlot({ # visualize forced association, put in tabset?
+  output$lm_plot <- renderPlot({ # visualize forced association, put in tabset?
     validate(
       need(!is.null(input$ML_predictor_1), "")
     )
@@ -276,7 +276,9 @@ shinyServer(function(input, output, clientData, session) {
     observeEvent(input$ML_preview_1,{
       showModal(modalDialog(easyClose = TRUE,size = "l"
                             , title = tags$b("Preview Simple Bivariate Association")
-                            , plotOutput("test_plot")
+                            , if(input$activate_ML_1==TRUE){
+                              plotOutput("lm_plot")
+                              } else {p("You did not yet mark this association as active.")}
                             , class = "on_top"
       ))
     })
@@ -284,7 +286,9 @@ shinyServer(function(input, output, clientData, session) {
     observeEvent(input$ML_preview_2,{
       showModal(modalDialog(easyClose = TRUE,size = "l"
                             , title = tags$b("Preview Association")
-                            , plotOutput("tree_plot")
+                            , if(input$activate_ML_2 == TRUE){
+                              plotOutput("tree_plot")
+                            } else { p("You did not yet mark this association as active.") }
                             , class = "on_top"
       ))
     })
@@ -569,18 +573,24 @@ shinyServer(function(input, output, clientData, session) {
     
     output$Associations <- renderUI({
       
+      # so right vars populate at start
+      input$var_type_1
+      
       isolate({
-        all_variables <- (
-          All_Inputs() %>%
-            filter(input_type == "var_name")
-        )$input_value
-        
         ok_variables <- (
           All_Inputs() %>%
             filter(input_type == "var_type"
+                   & !is.null(input_type)
+                   & !is.na(input_type)
                    & !(input_value %in% c(
                      "Long Filler Text","Names","Phone Numbers","Email Address")))
         )$input_number
+        
+        simple_variables <- (
+          All_Inputs() %>%
+            filter(input_type == "var_name"
+                   , input_number %in% ok_variables)
+        )$input_value
         
         num_variables <- (
           All_Inputs() %>%
@@ -588,17 +598,11 @@ shinyServer(function(input, output, clientData, session) {
                    & (input_value %in% c(
                      "Numeric")))
         )$input_number
-        
+
         num_outcome_variables <- (
           All_Inputs() %>%
             filter(input_type == "var_name"
                    & input_number %in% num_variables)
-        )$input_value
-        
-        simple_variables <- (
-          All_Inputs() %>%
-            filter(input_type == "var_name"
-                   & input_number %in% ok_variables)
         )$input_value
       })
       
@@ -606,16 +610,16 @@ shinyServer(function(input, output, clientData, session) {
              , fluidRow(class = "variable-row"
                         , column(1, align="center"
                                  , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                 , checkboxInput(("activate_ML_1"), label = "",width="100%"))
+                                 , checkboxInput("activate_ML_1", label = "",width="100%"))
                         , column(3, style = "margin-top: 25px; border-right: 1px dashed black;"
                                  , selectInput(paste0("ML_predictor_",1),NULL
                                                , simple_variables
                                                , multiple=FALSE))
-                        , column(2
+                        , column(3
                                  , style = "margin-top: 25px; border-right: 1px dashed black;"
                                  , selectInput(paste0("ML_outcome_",1),NULL
                                                , num_outcome_variables))
-                        , column(1, style = "margin-top: 25px;"
+                        , column(1, style = "margin-top: 25px; border-right: 1px dashed black;"
                                  , actionButton(paste0("ML_preview_",1), "",icon=icon("eye"),style="background-color: gray;"))
                         , column(2, sliderInput(paste0("ML_strength_",1), "Strength",min = 0, max = 100, value = 80)
                         )
@@ -623,36 +627,35 @@ shinyServer(function(input, output, clientData, session) {
                                  , sliderInput(paste0("ML_variability_",1), "Variability",min = 0, max = 20, value = 3)
                         )
                         
-                        , column(1
-                                 , style = "margin-top: 25px;"
-                                 , actionButton(paste0("ML_delete_",1), "",icon=icon("trash"),style="background-color: red;")
-                        )
+                        # , column(1
+                        #          , style = "margin-top: 25px;"
+                        #          , actionButton(paste0("ML_delete_",1), "",icon=icon("trash"),style="background-color: red;")
+                        # )
              )
       )
       , column(12,id = paste0("div_ML_",2)
                , fluidRow(class = "variable-row"
                           , column(1,align="center"
                                    , style = "margin-top: 25px; border-right: 1px dashed black;"
-                                   , checkboxInput(("activate_ML_2"), label = "",width="100%"))
+                                   , checkboxInput("activate_ML_2", label = "",width="100%"))
                           , column(3
                                    , style = "margin-top: 25px; border-right: 1px dashed black;"
                                    , selectInput(paste0("ML_predictor_",2),NULL
                                                  , simple_variables
                                                  , multiple=TRUE))
-                          , column(2,id = paste0("outcome_",2)
+                          , column(3,id = paste0("outcome_",2)
                                    , style = "margin-top: 25px; border-right: 1px dashed black;"
                                    , selectInput(paste0("ML_outcome_",2), NULL
                                                  , simple_variables))
-                          , column(1, style = "margin-top: 25px;"
+                          , column(1, style = "margin-top: 25px; border-right: 1px dashed black;"
                                    , actionButton(paste0("ML_preview_",2), "",icon=icon("eye"),style="background-color: gray;"))
                           , column(4,id = paste0("ML_input_col_",2)
-                                   # ,p("")
                                    , sliderInput(paste0("ML_strength_",2), "Strength",min = 0, max = 100, value = 80)
                           )
-                          , column(1
-                                   , style = "margin-top: 25px;"
-                                   , actionButton(paste0("ML_delete_",2), "",icon=icon("trash"),style="background-color: red;")
-                          )
+                          # , column(1
+                          #          , style = "margin-top: 25px;"
+                          #          , actionButton(paste0("ML_delete_",2), "",icon=icon("trash"),style="background-color: red;")
+                          # )
                )
       ))
     })
